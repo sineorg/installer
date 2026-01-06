@@ -48,4 +48,8 @@ target_link_libraries(sine_installer PRIVATE
     MINIZIP::minizip-ng
 )
 
-include_directories(src)
+if(WIN32)
+    target_link_libraries(sine_installer PRIVATE
+        legacy_stdio_definitions
+    )
+endif()
