@@ -53,3 +53,5 @@ if(WIN32)
         legacy_stdio_definitions
     )
 endif()
+
+include_directories(src)
