@@ -7,7 +7,6 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-set(VCPKG_TARGET_TRIPLET "x64-windows-static")
 project(sine_installer)
 set(CMAKE_CXX_STANDARD 17)
 
