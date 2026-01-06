@@ -16,6 +16,11 @@
 #include <vector>
 #include <chrono>
 #include <array>
+#include <string>
+
+#include <algorithm>
+#include <cctype>
+#include <cstring>
 
 #include <data.h>
 #include <stdlib.h>
@@ -852,8 +857,8 @@ int main(int argc, char* argv[])
             const std::string autoBrowserPath = getBrowserLocation(selectedBrowser, selectedVersion);
             if (browserPath[0] == '\0')
             {
-                std::memset(browserPath, 0, sizeof(browserPath));
-                std::strncpy(browserPath, autoBrowserPath.c_str(), sizeof(browserPath) - 1);
+                memset(browserPath, 0, sizeof(browserPath));
+                strncpy(browserPath, autoBrowserPath.c_str(), sizeof(browserPath) - 1);
             }
             ImGui::PushFont(bodyFont);
             ImGui::InputText("##browser", browserPath, IM_ARRAYSIZE(browserPath));
@@ -866,7 +871,7 @@ int main(int argc, char* argv[])
             {
                 std::string browserDataStr = (std::filesystem::path(browserPath) / "browser").string();
                 char browserData[128];
-                std::strncpy(browserData, browserDataStr.c_str(), sizeof(browserData) - 1);
+                strncpy(browserData, browserDataStr.c_str(), sizeof(browserData) - 1);
                 browserData[sizeof(browserData) - 1] = '\0';
 
                 if ((browserBuffer.st_mode & S_IFMT) == S_IFREG)
@@ -894,8 +899,8 @@ int main(int argc, char* argv[])
             const std::string autoProfilePath = getProfileLocation(selectedBrowser);
             if (profileFolderPath[0] == '\0')
             {
-                std::memset(profileFolderPath, 0, sizeof(profileFolderPath));
-                std::strncpy(profileFolderPath, autoProfilePath.c_str(), sizeof(profileFolderPath) - 1);
+                memset(profileFolderPath, 0, sizeof(profileFolderPath));
+                strncpy(profileFolderPath, autoProfilePath.c_str(), sizeof(profileFolderPath) - 1);
             }
             ImGui::PushFont(bodyFont);
             ImGui::InputText("##profile", profileFolderPath, IM_ARRAYSIZE(profileFolderPath));
@@ -908,7 +913,7 @@ int main(int argc, char* argv[])
             {
                 std::string browserDataStr = (std::filesystem::path(profileFolderPath) / "Profiles").string();
                 char browserData[128];
-                std::strncpy(browserData, browserDataStr.c_str(), sizeof(browserData) - 1);
+                strncpy(browserData, browserDataStr.c_str(), sizeof(browserData) - 1);
                 browserData[sizeof(browserData) - 1] = '\0';
 
                 if ((browserBuffer.st_mode & S_IFMT) == S_IFREG)
