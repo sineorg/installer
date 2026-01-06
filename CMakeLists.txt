@@ -21,11 +21,17 @@ add_executable(sine_installer
     external/imgui/backends/imgui_impl_glfw.cpp
     external/imgui/backends/imgui_impl_opengl3.cpp
 )
-
 if(WIN32)
     set_target_properties(sine_installer PROPERTIES
         WIN32_EXECUTABLE TRUE
-        LINK_FLAGS "/ENTRY:mainCRTStartup"
+    )
+
+    target_link_libraries(sine_installer PRIVATE legacy_stdio_definitions)
+
+    add_compile_definitions(
+        MZ_USE_WINDOWS_API
+        MZ_USE_CRT
+        _CRT_NONSTDC_NO_DEPRECATE
     )
 endif()
 
@@ -40,10 +46,6 @@ target_include_directories(sine_installer PRIVATE
     external/imgui/backends
     external/fonts
 )
-
-if(MSVC)
-    target_link_libraries(sine_installer PRIVATE legacy_stdio_definitions)
-endif()
 
 target_link_libraries(sine_installer PRIVATE
     glfw
