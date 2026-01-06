@@ -1,0 +1,9 @@
+{
+  "name": "sine-installer",
+  "version": "1.0.0",
+  "dependencies": [
+    "glfw3",
+    "curl",
+    "minizip-ng"
+  ]
+}
