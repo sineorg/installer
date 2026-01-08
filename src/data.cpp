@@ -119,5 +119,5 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
 };
 
 const std::string bootVersion = "0.1.1";
-const std::string sineVersion = "2.3b";
+const std::string sineVersion = "2.3c";
 const bool isCosine = true;
