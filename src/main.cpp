@@ -40,21 +40,26 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <aclapi.h>
+#include <tlhelp32.h>
+
+int main(int argc, char** argv);
+
+int WINAPI WinMain(
+    HINSTANCE,
+    HINSTANCE,
+    LPSTR,
+    int
+) {
+    return main(__argc, __argv);
+}
 #else
 #include <unistd.h>
 #include <pwd.h>
 #endif
 
-#ifdef _WIN32
-#include <windows.h>
-#include <tlhelp32.h>
-#elif __linux__
-#include <filesystem>
-#include <fstream>
-#elif __APPLE__
+#if __APPLE__
 #include <cstdio>
 #include <memory>
-#include <array>
 #endif
 
 using namespace std::chrono;
