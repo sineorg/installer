@@ -7,12 +7,22 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-project(sine_installer)
+project(sine_installer LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Force static linking where possible
+# Force static linking for your code and vcpkg libraries
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+# Windows-specific: static runtime
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+# Define static linking for GLFW before including
+if(WIN32)
+    add_compile_definitions(GLFW_STATIC)
+endif()
 
 # Add executable
 add_executable(sine_installer
@@ -27,21 +37,11 @@ add_executable(sine_installer
     external/imgui/backends/imgui_impl_opengl3.cpp
 )
 
-# Windows-specific settings
+# Windows-specific: GUI app (no console)
 if(WIN32)
-    # Build a Windows GUI executable (no console)
     set_target_properties(sine_installer PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
-
-    # Static runtime to avoid MSVCRT DLL dependency
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-    set(VCPKG_TARGET_TRIPLET "x64-windows-static")
-
-    # Tell GLFW we are using static linking
-    add_definitions(-DGLFW_INCLUDE_NONE)
-    add_definitions(-DGLFW_STATIC)
 endif()
 
 # Include vcpkg-installed packages
@@ -58,7 +58,7 @@ target_include_directories(sine_installer PRIVATE
     external/fonts
 )
 
-# MSVC-specific libraries
+# MSVC-specific legacy stdio definitions
 if(MSVC)
     target_link_libraries(sine_installer PRIVATE legacy_stdio_definitions)
 endif()
