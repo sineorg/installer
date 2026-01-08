@@ -37,6 +37,8 @@ if(WIN32)
     # Static runtime to avoid MSVCRT DLL dependency
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+    set(VCPKG_TARGET_TRIPLET "x64-windows-static")
+
     # Tell GLFW we are using static linking
     add_definitions(-DGLFW_INCLUDE_NONE)
     add_definitions(-DGLFW_STATIC)
