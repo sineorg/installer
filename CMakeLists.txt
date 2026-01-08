@@ -14,7 +14,7 @@ if (WIN32)
     set(VCPKG_TARGET_TRIPLET "x64-windows-static")
 endif()
 
-project(sine_installer LANGUAGES CXX)
+project(sine_installer LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
