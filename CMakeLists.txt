@@ -51,6 +51,10 @@ target_include_directories(sine_installer PRIVATE
     external/fonts
 )
 
+if(MSVC)
+    target_link_libraries(sine_installer PRIVATE legacy_stdio_definitions)
+endif()
+
 target_link_libraries(sine_installer PRIVATE
     glfw
     OpenGL::GL
