@@ -9,6 +9,10 @@ endif()
 
 project(sine_installer)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Force static linking where possible
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 # Add executable
 add_executable(sine_installer
@@ -23,17 +27,28 @@ add_executable(sine_installer
     external/imgui/backends/imgui_impl_opengl3.cpp
 )
 
+# Windows-specific settings
 if(WIN32)
+    # Build a Windows GUI executable (no console)
     set_target_properties(sine_installer PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
+
+    # Static runtime to avoid MSVCRT DLL dependency
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+    # Tell GLFW we are using static linking
+    add_definitions(-DGLFW_INCLUDE_NONE)
+    add_definitions(-DGLFW_STATIC)
 endif()
 
+# Include vcpkg-installed packages
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(minizip-ng REQUIRED)
 
+# Include directories
 target_include_directories(sine_installer PRIVATE
     external/glad/include
     external/imgui
@@ -41,10 +56,12 @@ target_include_directories(sine_installer PRIVATE
     external/fonts
 )
 
+# MSVC-specific libraries
 if(MSVC)
     target_link_libraries(sine_installer PRIVATE legacy_stdio_definitions)
 endif()
 
+# Link libraries
 target_link_libraries(sine_installer PRIVATE
     glfw
     OpenGL::GL
@@ -52,4 +69,5 @@ target_link_libraries(sine_installer PRIVATE
     MINIZIP::minizip-ng
 )
 
+# Include source directory
 include_directories(src)
