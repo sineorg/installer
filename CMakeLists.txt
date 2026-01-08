@@ -6,7 +6,6 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(sine_installer)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -25,7 +24,6 @@ add_executable(sine_installer
 if(WIN32)
     set_target_properties(sine_installer PROPERTIES
         WIN32_EXECUTABLE TRUE
-        LINK_FLAGS "/ENTRY:mainCRTStartup"
     )
 endif()
 
@@ -48,10 +46,5 @@ target_link_libraries(sine_installer PRIVATE
     MINIZIP::minizip-ng
 )
 
-if(WIN32)
-    target_link_libraries(sine_installer PRIVATE
-        legacy_stdio_definitions
-    )
-endif()
 
 include_directories(src)
