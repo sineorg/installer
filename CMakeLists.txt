@@ -10,10 +10,6 @@ if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-if (WIN32)
-    set(VCPKG_TARGET_TRIPLET "x64-windows-static")
-endif()
-
 project(sine_installer LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -54,10 +50,6 @@ target_include_directories(sine_installer PRIVATE
     external/imgui/backends
     external/fonts
 )
-
-if(MSVC)
-    target_link_libraries(sine_installer PRIVATE legacy_stdio_definitions)
-endif()
 
 target_link_libraries(sine_installer PRIVATE
     glfw
