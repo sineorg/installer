@@ -895,7 +895,7 @@ int main(int argc, char* argv[])
                     ImGui::Text("Path should be a folder, not a file.");
                     hasError = true;
                 }
-                else if (stat(browserData, &browserBuffer) != 0)
+                else if (stat(browserData, &browserBuffer) != 0 && getOS() != "darwin")
                 {
                     ImGui::Text("Path should contain browser-like contents.");
                     hasError = true;
