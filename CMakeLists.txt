@@ -10,11 +10,6 @@ endif()
 project(sine_installer)
 set(CMAKE_CXX_STANDARD 17)
 
-# Force static CRT on Windows
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")  # /MT or /MTd
-endif()
-
 # Add executable
 add_executable(sine_installer
     src/main.cpp
@@ -28,21 +23,17 @@ add_executable(sine_installer
     external/imgui/backends/imgui_impl_opengl3.cpp
 )
 
-# Windows-specific properties
 if(WIN32)
-    add_definitions(-DGLFW_STATIC)  # Tell GLFW we're linking statically
     set_target_properties(sine_installer PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
 endif()
 
-# Dependencies
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(minizip-ng REQUIRED)
 
-# Include directories
 target_include_directories(sine_installer PRIVATE
     external/glad/include
     external/imgui
@@ -50,9 +41,7 @@ target_include_directories(sine_installer PRIVATE
     external/fonts
 )
 
-# Link libraries (static versions)
 if(MSVC)
-    # Needed for old symbols in some static libs
     target_link_libraries(sine_installer PRIVATE legacy_stdio_definitions)
 endif()
 
@@ -62,9 +51,5 @@ target_link_libraries(sine_installer PRIVATE
     CURL::libcurl
     MINIZIP::minizip-ng
 )
-
-# Include src folder for convenience
-include_directories(src)
-
 
 include_directories(src)
