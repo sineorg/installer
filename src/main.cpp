@@ -436,7 +436,7 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
 
     // Now add the program path and its arguments
     cmd += shellEscape(exePath);
-    cmd += " --helper --browser " + shellEscape(browserPath);
+    cmd += " --browser " + shellEscape(browserPath);
     cmd += " --profile " + shellEscape(profilePath);
 
     if (shouldUninstall)
