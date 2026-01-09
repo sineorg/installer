@@ -660,15 +660,12 @@ int main(int argc, char* argv[])
 {
     if (!glfwInit()) return -1;
 
-#ifdef __APPLE__
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#else
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 
     const int windowHeight = 900;
@@ -700,7 +697,12 @@ int main(int argc, char* argv[])
     ImGui::GetStyle().ScaleAllSizes(uiScale);
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
+    
+#ifdef __APPLE__
+    ImGui_ImplOpenGL3_Init("#version 150");
+#else
     ImGui_ImplOpenGL3_Init("#version 330");
+#endif
 
     // === Embedded fonts ===
     ImGuiIO& io = ImGui::GetIO();
