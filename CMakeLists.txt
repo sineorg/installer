@@ -32,6 +32,10 @@ add_executable(sine_installer
     external/imgui/backends/imgui_impl_opengl3.cpp
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(sine_installer PRIVATE -static-libgcc -static-libstdc++)
+endif()
+
 if(WIN32)
     set_target_properties(sine_installer PROPERTIES
         WIN32_EXECUTABLE TRUE

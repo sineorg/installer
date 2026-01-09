@@ -342,32 +342,45 @@ bool fixFilePerms(const std::string& filepath) {
 
 #else
     struct stat st;
-    if (stat(path.c_str(), &st) != 0)
+    if (stat(filepath.c_str(), &st) != 0)
         return false;
 
     if (S_ISDIR(st.st_mode))
     {
-        // 755 for directories
-        chmod(path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+        // Directories: 755
+        if (chmod(filepath.c_str(),
+                  S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0)
+            return false;
     }
     else
     {
-        // 644 for files
-        chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        // Files: 644
+        if (chmod(filepath.c_str(),
+                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) != 0)
+            return false;
     }
+
+    return false;
 #endif
 }
 
-static std::string shellEscape(const std::string& s)
+std::string shellEscape(const std::string& input)
 {
+    // POSIX shell-safe escaping using single quotes
+    // abc'def → 'abc'"'"'def'
     std::string out;
-    out.reserve(s.size() + 8);
-    for (char c : s)
+    out.reserve(input.size() + 2);
+
+    out.push_back('\'');
+    for (char c : input)
     {
-        if (c == '\\' || c == '"' || c == '$' || c == '`')
-            out += '\\';
-        out += c;
+        if (c == '\'')
+            out += "'\"'\"'";
+        else
+            out.push_back(c);
     }
+    out.push_back('\'');
+
     return out;
 }
 
@@ -406,26 +419,31 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
 
     exePath[len] = '\0';
 
-    std::string cmd = "pkexec \"";
+    // Get required environment variables from the current user session
+    const char* display = std::getenv("DISPLAY");
+    const char* xauth = std::getenv("XAUTHORITY");
+    const char* home = std::getenv("HOME");
+
+    std::string cmd = "pkexec --disable-internal-agent env ";
+
+    // Pass display variables to the root environment
+    if (const char* display = std::getenv("DISPLAY"))
+        cmd += "DISPLAY=" + std::string(display) + " ";
+    if (const char* xauth = std::getenv("XAUTHORITY"))
+        cmd += "XAUTHORITY=" + std::string(xauth) + " ";
+    if (const char* home = std::getenv("HOME"))
+	cmd += "HOME=" + std::string(home) + " ";
+
+    // Now add the program path and its arguments
     cmd += shellEscape(exePath);
-    cmd += "\"";
+    cmd += " --helper --browser " + shellEscape(browserPath);
+    cmd += " --profile " + shellEscape(profilePath);
 
-    cmd += " --browser \"" + shellEscape(browserPath) + "\"";
-    cmd += " --profile \"" + shellEscape(profilePath) + "\"";
-
-    if (shouldSaveData)   cmd += " -s";
-    if (shouldUninstall) cmd += " -u";
-    if (!reinstallBoot)  cmd += " --no-boot";
-    if (!showExitScreen) cmd += " --update";
+    if (shouldUninstall)
+        cmd += " -u";
 
     int result = system(cmd.c_str());
-
-    if (result == 0)
-    {
-        _exit(0);
-    }
-
-    return false;
+    return WIFEXITED(result) && WEXITSTATUS(result) == 0;
 
 #elif defined(__APPLE__)
     char exePath[PATH_MAX];
