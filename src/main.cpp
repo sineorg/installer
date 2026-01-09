@@ -341,34 +341,34 @@ bool fixFilePerms(const std::string& filepath) {
     return (result == ERROR_SUCCESS);
 
 #else
-    // Get the real user who launched the program
-    uid_t real_uid = getuid();
-    gid_t real_gid = getgid();
-
-    // If running as root (via sudo), get the original user
-    const char* sudo_uid = getenv("SUDO_UID");
-    const char* sudo_gid = getenv("SUDO_GID");
-
-    if (sudo_uid && sudo_gid)
-    {
-        real_uid = (uid_t)atoi(sudo_uid);
-        real_gid = (gid_t)atoi(sudo_gid);
-    }
-
-    // Change ownership to real user
-    if (chown(filepath.c_str(), real_uid, real_gid) != 0)
-    {
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0)
         return false;
-    }
 
-    // Set permissions to 644 (rw-r--r--)
-    if (chmod(filepath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) != 0)
+    if (S_ISDIR(st.st_mode))
     {
-        return false;
+        // 755 for directories
+        chmod(path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
     }
-
-    return true;
+    else
+    {
+        // 644 for files
+        chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    }
 #endif
+}
+
+static std::string shellEscape(const std::string& s)
+{
+    std::string out;
+    out.reserve(s.size() + 8);
+    for (char c : s)
+    {
+        if (c == '\\' || c == '"' || c == '$' || c == '`')
+            out += '\\';
+        out += c;
+    }
+    return out;
 }
 
 bool requestAdmin(const std::string& browserPath, const std::string& profilePath, bool shouldSaveData, bool shouldUninstall, bool reinstallBoot, bool showExitScreen)
@@ -401,67 +401,64 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
 #elif defined(__linux__)
     char exePath[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
-    if (len == -1)
+    if (len <= 0)
         return false;
+
     exePath[len] = '\0';
 
-    std::string command = "sudo -k \"";
-    command += exePath;
-    command += "\"";
-    command += " --browser \"" + browserPath + "\"";
-    command += " --profile \"" + profilePath + "\"";
-    if (shouldSaveData) command += " -s";
-    if (shouldUninstall) command += " -u";
+    std::string cmd = "pkexec \"";
+    cmd += shellEscape(exePath);
+    cmd += "\"";
 
-    std::cout << "Relaunching with sudo:\n" << command << std::endl;
+    cmd += " --browser \"" + shellEscape(browserPath) + "\"";
+    cmd += " --profile \"" + shellEscape(profilePath) + "\"";
 
-    int result = system(command.c_str());
+    if (shouldSaveData)   cmd += " -s";
+    if (shouldUninstall) cmd += " -u";
+    if (!reinstallBoot)  cmd += " --no-boot";
+    if (!showExitScreen) cmd += " --update";
 
-    if (result == -1)
-        return false;
+    int result = system(cmd.c_str());
 
-    if (WIFEXITED(result))
-        return WEXITSTATUS(result) == 0;
+    if (result == 0)
+    {
+        _exit(0);
+    }
 
     return false;
 
 #elif defined(__APPLE__)
     char exePath[PATH_MAX];
     uint32_t size = sizeof(exePath);
+
     if (_NSGetExecutablePath(exePath, &size) != 0)
         return false;
 
-    auto escape = [](const std::string& s) {
-        std::string out;
-        out.reserve(s.size());
-        for (char c : s) {
-            if (c == '\\' || c == '"')
-                out += '\\';
-            out += c;
-        }
-        return out;
-    };
+    std::string args;
+    args += "\"" + shellEscape(exePath) + "\"";
+    args += " --browser \"" + shellEscape(browserPath) + "\"";
+    args += " --profile \"" + shellEscape(profilePath) + "\"";
 
-    std::string args =
-        "--browser \"" + escape(browserPath) + "\""
-        " --profile \"" + escape(profilePath) + "\""
-        + (shouldSaveData ? " -s" : "")
-        + (shouldUninstall ? " -u" : "");
+    if (shouldSaveData)   args += " -s";
+    if (shouldUninstall) args += " -u";
+    if (!reinstallBoot)  args += " --no-boot";
+    if (!showExitScreen) args += " --update";
 
     std::string script =
-        "do shell script \"" +
-        escape(std::string(exePath) + " " + args) +
+        "do shell script \"" + shellEscape(args) +
         "\" with administrator privileges";
 
-    std::string command = "osascript -e \"" + escape(script) + "\"";
+    std::string cmd =
+        "osascript -e \"" + shellEscape(script) + "\"";
 
-    std::cout << "Relaunching with admin:\n" << command << std::endl;
+    int result = system(cmd.c_str());
 
-    int result = system(command.c_str());
-    if (result == -1)
-        return false;
+    if (result == 0)
+    {
+        _exit(0);
+    }
 
-    return WIFEXITED(result) && WEXITSTATUS(result) == 0;
+    return false;
 
 #else
     std::cerr << "Unsupported OS.\n";
