@@ -55,11 +55,14 @@ int WINAPI WinMain(
 #else
 #include <unistd.h>
 #include <pwd.h>
+#include <limits.h>
+#include <sys/wait.h>
 #endif
 
 #if __APPLE__
 #include <cstdio>
 #include <memory>
+#include <mach-o/dyld.h>
 #endif
 
 using namespace std::chrono;
@@ -396,34 +399,69 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
     return true;
 
 #elif defined(__linux__)
-    std::string command = "sudo " + std::string(getenv("_"));
+    char exePath[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
+    if (len == -1)
+        return false;
+    exePath[len] = '\0';
+
+    std::string command = "sudo -k \"";
+    command += exePath;
+    command += "\"";
     command += " --browser \"" + browserPath + "\"";
     command += " --profile \"" + profilePath + "\"";
     if (shouldSaveData) command += " -s";
     if (shouldUninstall) command += " -u";
 
-    std::cout << "Relaunching with sudo: " << command << std::endl;
+    std::cout << "Relaunching with sudo:\n" << command << std::endl;
+
     int result = system(command.c_str());
-    if (WIFEXITED(result) && WEXITSTATUS(result) == 0)
-    {
-        return true;
-    }
+
+    if (result == -1)
+        return false;
+
+    if (WIFEXITED(result))
+        return WEXITSTATUS(result) == 0;
+
     return false;
 
 #elif defined(__APPLE__)
-    std::string args = "--browser \"" + browserPath + "\""
-        + " --profile \"" + profilePath + "\""
+    char exePath[PATH_MAX];
+    uint32_t size = sizeof(exePath);
+    if (_NSGetExecutablePath(exePath, &size) != 0)
+        return false;
+
+    auto escape = [](const std::string& s) {
+        std::string out;
+        out.reserve(s.size());
+        for (char c : s) {
+            if (c == '\\' || c == '"')
+                out += '\\';
+            out += c;
+        }
+        return out;
+    };
+
+    std::string args =
+        "--browser \"" + escape(browserPath) + "\""
+        " --profile \"" + escape(profilePath) + "\""
         + (shouldSaveData ? " -s" : "")
         + (shouldUninstall ? " -u" : "");
 
-    std::string command = "osascript -e 'do shell script \"" + std::string(getenv("_")) + " " + args + "\" with administrator privileges'";
-    std::cout << "Relaunching with admin: " << command << std::endl;
+    std::string script =
+        "do shell script \"" +
+        escape(std::string(exePath) + " " + args) +
+        "\" with administrator privileges";
+
+    std::string command = "osascript -e \"" + escape(script) + "\"";
+
+    std::cout << "Relaunching with admin:\n" << command << std::endl;
+
     int result = system(command.c_str());
-    if (WIFEXITED(result) && WEXITSTATUS(result) == 0)
-    {
-        return true;
-    }
-    return false;
+    if (result == -1)
+        return false;
+
+    return WIFEXITED(result) && WEXITSTATUS(result) == 0;
 
 #else
     std::cerr << "Unsupported OS.\n";
