@@ -423,6 +423,10 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
     const char* display = std::getenv("DISPLAY");
     const char* xauth = std::getenv("XAUTHORITY");
     const char* home = std::getenv("HOME");
+    const char* runtimeDir = std::getenv("XDG_RUNTIME_DIR");
+    const char* waylandDisplay = std::getenv("WAYLAND_DISPLAY");
+    const char* sessionId = std::getenv("XDG_SESSION_ID");
+    const char* xdgSeat = std::getenv("XDG_SEAT");
 
     std::string cmd = "pkexec --disable-internal-agent env ";
 
@@ -432,7 +436,15 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
     if (const char* xauth = std::getenv("XAUTHORITY"))
         cmd += "XAUTHORITY=" + std::string(xauth) + " ";
     if (const char* home = std::getenv("HOME"))
-	cmd += "HOME=" + std::string(home) + " ";
+        	cmd += "HOME=" + std::string(home) + " ";
+    if (const char* runtimeDir = std::getenv("XDG_RUNTIME_DIR"))
+        cmd += "XDG_RUNTIME_DIR=" + std::string(runtimeDir) + " ";
+    if (const char* waylandDisplay = std::getenv("WAYLAND_DISPLAY"))
+        cmd += "WAYLAND_DISPLAY=" + std::string(waylandDisplay) + " ";
+    if (const char* sessionId = std::getenv("XDG_SESSION_ID"))
+        cmd += "XDG_SESSION_ID=" + std::string(sessionId) + " ";
+    if (const char* xdgSeat = std::getenv("XDG_SEAT"))
+        cmd += "XDG_SEAT=" + std::string(xdgSeat) + " ";
 
     // Now add the program path and its arguments
     cmd += shellEscape(exePath);
