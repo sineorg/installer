@@ -613,15 +613,15 @@ void extractZip(const std::string& zipPath, const std::string& outputDir, const 
     std::filesystem::create_directories(outputDir);
     fixFilePerms(outputDir);
 
-    if (checkIfExists != "" && std::filesystem::exists(outPath))
+    if (checkIfExists != "" && std::filesystem::exists(checkIfExists))
     {
         std::filesystem::permissions(
-            outPath,
+            checkIfExists,
             std::filesystem::perms::owner_write,
             std::filesystem::perm_options::add
         );
     
-        std::filesystem::remove(outPath);
+        std::filesystem::remove(checkIfExists);
     }
 
     void* reader = mz_zip_reader_create();
