@@ -428,7 +428,7 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
     const char* sessionId = std::getenv("XDG_SESSION_ID");
     const char* xdgSeat = std::getenv("XDG_SEAT");
 
-    std::string cmd = "pkexec --disable-internal-agent env ";
+    std::string cmd = "pkexec env ";
 
     // Pass display variables to the root environment
     if (const char* display = std::getenv("DISPLAY"))
