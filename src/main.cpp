@@ -608,10 +608,21 @@ bool downloadFile(const std::string& url, const std::string& outputPath)
     return (res == CURLE_OK);
 }
 
-void extractZip(const std::string& zipPath, const std::string& outputDir)
+void extractZip(const std::string& zipPath, const std::string& outputDir, const std::string& checkIfExists = "")
 {
     std::filesystem::create_directories(outputDir);
     fixFilePerms(outputDir);
+
+    if (checkIfExists != "" && std::filesystem::exists(outPath))
+    {
+        std::filesystem::permissions(
+            outPath,
+            std::filesystem::perms::owner_write,
+            std::filesystem::perm_options::add
+        );
+    
+        std::filesystem::remove(outPath);
+    }
 
     void* reader = mz_zip_reader_create();
     mz_zip_reader_open_file(reader, zipPath.c_str());
@@ -1190,7 +1201,7 @@ int main(int argc, char* argv[])
                 }
                 else if (strstr(steps[installStep], "Configuring your browser") != nullptr)
                 {
-                    extractZip(downloadsFolder + "/program.zip", browserPathStr);
+                    extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
                 }
                 else if (strstr(steps[installStep], "profile.zip") != nullptr)
                 {
