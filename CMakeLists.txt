@@ -46,7 +46,7 @@ endif()
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(CURL REQUIRED)
-find_package(minizip-ng REQUIRED)
+# find_package(minizip-ng REQUIRED)
 
 target_include_directories(sine_installer PRIVATE
     external/glad/include
@@ -63,7 +63,25 @@ target_link_libraries(sine_installer PRIVATE
     glfw
     OpenGL::GL
     CURL::libcurl
-    MINIZIP::minizip-ng
+    # MINIZIP::minizip-ng
 )
 
 include_directories(src)
+
+# Helper binary for privileged operations (Linux only)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_executable(sine-installer-helper
+        src/helper.cpp
+        src/data.cpp
+    )
+
+    target_include_directories(sine-installer-helper PRIVATE src)
+    
+    set_target_properties(sine-installer-helper PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+    )
+
+    target_link_options(sine-installer-helper PRIVATE -static-libgcc -static-libstdc++)
+endif()
+
