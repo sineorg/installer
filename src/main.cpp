@@ -29,7 +29,11 @@
 #include <sys/stat.h>
 #include <fstream>
 
-// minizip-ng not used - using system unzip command instead
+#include <minizip-ng/mz.h>
+#include <minizip-ng/mz_strm.h>
+#include <minizip-ng/mz_strm_os.h>
+#include <minizip-ng/mz_zip.h>
+#include <minizip-ng/mz_zip_rw.h>
 
 #ifdef _WIN32
 #define NOMINMAX
