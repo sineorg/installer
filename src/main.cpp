@@ -28,6 +28,7 @@
 #include <filesystem>
 #include <sys/stat.h>
 #include <fstream>
+#include <thread>
 
 #include <minizip-ng/mz.h>
 #include <minizip-ng/mz_strm.h>
@@ -404,6 +405,7 @@ bool requestAdmin(
     bool shouldUninstall,
     bool reinstallBoot,
     bool showExitScreen,
+    bool adminBrowser,
     int installStep
 )
 {
@@ -417,14 +419,17 @@ bool requestAdmin(
         + (shouldUninstall ? "-u " : "")
         + (reinstallBoot ? "" : "--no-boot ")
         + (showExitScreen ? "" : "--update ")
-        + "--install-step " + std::to_string(installStep);
+        + (adminBrowser ? "--admin-browser " : "")
+        + "--install-step \"" + std::to_string(installStep) + "\"";
 
     SHELLEXECUTEINFOW sei{};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
     sei.lpVerb = L"runas";
-    sei.lpFile = s2ws(std::string(path)).c_str();
-    sei.lpParameters = s2ws(parameters).c_str();
+    std::wstring pathW = s2ws(std::string(path));
+    sei.lpFile = pathW.c_str();
+    std::wstring paramsW = s2ws(parameters);
+    sei.lpParameters = paramsW.c_str();
     sei.nShow = SW_HIDE;
 
     if (!ShellExecuteExW(&sei))
@@ -674,6 +679,7 @@ void extractZip(const std::string& zipPath, const std::string& outputDir, const 
             // Write buffer to file
             std::ofstream outFile(outPath, std::ios::binary);
             outFile.write(reinterpret_cast<char*>(buffer.data()), bytes_read);
+            outFile.sync_with_stdio();
             outFile.close();
 
             fixFilePerms(outPath);
@@ -839,9 +845,9 @@ int requestAdminProcess(
     int installStep, GLFWwindow*& window, bool& hadAdminProcess
 )
 {
-    if (!isAdmin && needsAdmin)
+    if (!hadAdminProcess && !isAdmin && needsAdmin)
     {
-        if (requestAdmin(browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, installStep))
+        if (requestAdmin(browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, needsAdmin, installStep))
         {
             adminProcess = true;
             hadAdminProcess = true;
@@ -850,19 +856,25 @@ int requestAdminProcess(
         {
             shouldTryAdmin = false;
         }
-        return 1;
+
+        return 0;
     }
     else if (!needsAdmin && isAdmin)
     {
         return -1;
     }
-    return 0;
+    else if (!isAdmin && needsAdmin && hadAdminProcess)
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 void installSine(
     ImFont*& titleFont, ImFont*& mediumFont, ImFont*& lightFont,
     float timeDiff, bool shouldUninstall, bool& shouldTryAdmin,
-    std::string& profilePath, bool reinstallBoot, int& adminProfile, int& adminBrowser,
+    std::string& profilePath, bool reinstallBoot, int& adminBrowser,
     std::string& browserPathStr, bool& isAdmin, int selectedBrowser,
     bool showExitScreen, int& installStep, bool shouldSaveData,
     GLFWwindow*& window, float uiScale, ImGuiIO& io, bool& adminProcess, bool& hadAdminProcess
@@ -917,11 +929,6 @@ void installSine(
     }
     steps.insert(steps.end(), { "Finished." });
 
-    if (adminProfile == -1)
-    {
-        adminProfile = !canWriteToFolder(profilePath) ? 1 : 0;
-    }
-
     if (adminBrowser == -1)
     {
         adminBrowser = (reinstallBoot || shouldUninstall) && !canWriteToFolder(browserPathStr) ? 1 : 0;
@@ -942,42 +949,43 @@ void installSine(
             ImGui::PopStyleColor();
         }
 
-        if (strstr(steps[installStep], "program.zip") != nullptr)
+        bool nextStep = false;
+        while (!nextStep)
         {
-            const std::string fileName = "/program.zip";
-            downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
-        }
-        else if (strstr(steps[installStep], "Configuring your browser") != nullptr)
-        {
-            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
-            if (!hadAdminProcess && result == 1)
+            if (strstr(steps[installStep], "program.zip") != nullptr)
             {
-                extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
+                const std::string fileName = "/program.zip";
+                downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
             }
-            else if (result == -1)
+            else if (strstr(steps[installStep], "Configuring your browser") != nullptr)
             {
-                return;
+                int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
+                if (result == 1)
+                {
+                    extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
+                    nextStep = true;
+                }
+                else if (result == -1)
+                {
+                    return;
+                }
             }
-        }
-        else if (strstr(steps[installStep], "profile.zip") != nullptr)
-        {
-            const std::string fileName = "/profile.zip";
-            downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
-        }
-        else if (strstr(steps[installStep], "engine.zip") != nullptr)
-        {
-            const std::string fileName = "/engine.zip";
-            downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
-        }
-        else if (strstr(steps[installStep], "locales.zip") != nullptr)
-        {
-            const std::string fileName = "/locales.zip";
-            downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
-        }
-        else if (strstr(steps[installStep], "Configuring your profile") != nullptr)
-        {
-            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
-            if (!hadAdminProcess && result == 1)
+            else if (strstr(steps[installStep], "profile.zip") != nullptr)
+            {
+                const std::string fileName = "/profile.zip";
+                downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
+            }
+            else if (strstr(steps[installStep], "engine.zip") != nullptr)
+            {
+                const std::string fileName = "/engine.zip";
+                downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
+            }
+            else if (strstr(steps[installStep], "locales.zip") != nullptr)
+            {
+                const std::string fileName = "/locales.zip";
+                downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
+            }
+            else if (strstr(steps[installStep], "Configuring your profile") != nullptr)
             {
                 extractZip(downloadsFolder + "/profile.zip", profilePath + "/chrome");
                 extractZip(downloadsFolder + "/engine.zip", profilePath + "/chrome");
@@ -990,85 +998,70 @@ void installSine(
                     ("user_pref(\"sine.latest-version\", \"" + sineVersion + "\");") << std::endl;
                 file.close();
             }
-            else if (result == -1)
+            else if (strstr(steps[installStep], "Cleaning up your browser") != nullptr)
             {
-                return;
+                int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
+                if (result == 1)
+                {
+                    std::error_code ec;
+                    std::filesystem::remove(browserPathStr + "/defaults/pref/config-prefs.js", ec);
+                    std::filesystem::remove(browserPathStr + "config.js", ec);
+                }
+                else if (result == -1)
+                {
+                    return;
+                }
             }
-        }
-        else if (strstr(steps[installStep], "Cleaning up your browser") != nullptr)
-        {
-            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
-            if (!hadAdminProcess && result == 1)
-            {
-                std::filesystem::remove(browserPathStr + "/defaults/pref/config-prefs.js");
-                std::filesystem::remove(browserPathStr + "config.js");
-            }
-            else if (result == -1)
-            {
-                return;
-            }
-        }
-        else if (strstr(steps[installStep], "Cleaning up your profile") != nullptr)
-        {
-            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
-            if (!hadAdminProcess && result == 1)
+            else if (strstr(steps[installStep], "Cleaning up your profile") != nullptr)
             {
                 removeDir(profilePath + "/chrome/JS");
                 removeDir(profilePath + "/chrome/utils");
                 removeDir(profilePath + "/chrome/locales");
             }
-            else if (result == -1)
-            {
-                return;
-            }
-        }
-        else if (
-            !shouldSaveData && strstr(steps[installStep], "Removing mods") != nullptr &&
-            std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "sine-mods")
-            )
-        {
-            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
-            if (!hadAdminProcess && result == 1)
+            else if (
+                !shouldSaveData && strstr(steps[installStep], "Removing mods") != nullptr &&
+                std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "sine-mods")
+                )
             {
                 std::filesystem::remove_all(profilePath + "/chrome/sine-mods");
             }
-            else if (result == -1)
+            else if (strstr(steps[installStep], "Clearing startup cache") != nullptr)
             {
-                return;
+                if (getOS() == "win32")
+                {
+                    size_t pos = profilePath.find("Roaming");
+                    removeDir(profilePath.replace(pos, 7, "Local") + "/startupCache");
+                }
+                else if (getOS() == "darwin")
+                {
+                    size_t pos = profilePath.find("Application Support");
+                    removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
+                }
             }
-        }
-        else if (strstr(steps[installStep], "Clearing startup cache") != nullptr)
-        {
-            if (getOS() == "win32")
+            else if (strstr(steps[installStep], "Cleaning up") != nullptr)
             {
-                size_t pos = profilePath.find("Roaming");
-                removeDir(profilePath.replace(pos, 7, "Local") + "/startupCache");
+                std::filesystem::remove(downloadsFolder + "/program.zip");
+                std::filesystem::remove(downloadsFolder + "/profile.zip");
+                std::filesystem::remove(downloadsFolder + "/engine.zip");
+                std::filesystem::remove(downloadsFolder + "/locales.zip");
             }
-            else if (getOS() == "darwin")
+            else if (window)
             {
-                size_t pos = profilePath.find("Application Support");
-                removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
+                ImGui::Dummy(ImVec2(0.0f, 20.0f));
+                ImGui::PushFont(lightFont);
+                ImGui::Text("If Sine does not appear in the settings page, you may need to clear startup cache");
+                ImGui::Text("(visit about:support and click 'Clear Startup Cache', you must do this on Linux).");
+                ImGui::PopFont();
             }
-        }
-        else if (strstr(steps[installStep], "Cleaning up") != nullptr)
-        {
-            std::filesystem::remove(downloadsFolder + "/program.zip");
-            std::filesystem::remove(downloadsFolder + "/profile.zip");
-            std::filesystem::remove(downloadsFolder + "/engine.zip");
-            std::filesystem::remove(downloadsFolder + "/locales.zip");
-        }
-        else if (window)
-        {
-            ImGui::Dummy(ImVec2(0.0f, 20.0f));
-            ImGui::PushFont(lightFont);
-            ImGui::Text("If Sine does not appear in the settings page, you may need to clear startup cache");
-            ImGui::Text("(visit about:support and click 'Clear Startup Cache', you must do this on Linux).");
-            ImGui::PopFont();
-        }
 
-        if (installStep != steps.size() - 1)
-        {
-            installStep += 1;
+            if (installStep != steps.size() - 1)
+            {
+                installStep += 1;
+            }
+            else
+            {
+                nextStep = true;
+            }
         }
     }
     else if (window && browserOpen && showExitScreen)
@@ -1121,7 +1114,6 @@ int main(int argc, char* argv[])
     bool isAdmin = isUserAdmin();
     bool shouldTryAdmin = true;
     int installStep = 0;
-    int adminProfile = -1;
     int adminBrowser = -1;
     bool adminProcess = false;
     bool hadAdminProcess = false;
@@ -1157,6 +1149,10 @@ int main(int argc, char* argv[])
         {
             showExitScreen = false;
         }
+        else if (arg == "--admin-browser")
+        {
+            adminBrowser = 1;
+        }
         else if (arg == "--install-step")
         {
             installStep = std::stoi(argv[i + 1]);
@@ -1171,10 +1167,15 @@ int main(int argc, char* argv[])
             ImGuiIO real_io;
             ImGuiIO& io = real_io;
 
+            if (adminBrowser == -1)
+            {
+                adminBrowser = 0;
+            }
+
             installSine(
                 titleFont, mediumFont, lightFont,
                 0, shouldUninstall, shouldTryAdmin,
-                profilePath, reinstallBoot, adminProfile, adminBrowser,
+                profilePath, reinstallBoot, adminBrowser,
                 browserPathStr, isAdmin, selectedBrowser,
                 showExitScreen, installStep, shouldSaveData,
                 window, uiScale, io, adminProcess, hadAdminProcess
@@ -1533,7 +1534,7 @@ int main(int argc, char* argv[])
             installSine(
                 titleFont, mediumFont, lightFont,
                 timeDiff, shouldUninstall, shouldTryAdmin,
-                profilePath, reinstallBoot, adminProfile, adminBrowser,
+                profilePath, reinstallBoot, adminBrowser,
                 browserPathStr, isAdmin, selectedBrowser,
                 showExitScreen, installStep, shouldSaveData,
                 window, uiScale, io, adminProcess, hadAdminProcess
