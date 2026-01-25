@@ -854,8 +854,7 @@ bool requestAdminProcess(
     }
     else if (!needsAdmin && isAdmin)
     {
-        glfwSetWindowShouldClose(window, true);
-        return false;
+        
     }
     return false;
 }
@@ -950,9 +949,14 @@ void installSine(
         }
         else if (strstr(steps[installStep], "Configuring your browser") != nullptr)
         {
-            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
+            if (!hadAdminProcess && result == 1
             {
                 extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
+            }
+            else if (result == -1)
+            {
+                return;
             }
         }
         else if (strstr(steps[installStep], "profile.zip") != nullptr)
@@ -972,7 +976,8 @@ void installSine(
         }
         else if (strstr(steps[installStep], "Configuring your profile") != nullptr)
         {
-            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminProfile, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
+            if (!hadAdminProcess && result == 1)
             {
                 extractZip(downloadsFolder + "/profile.zip", profilePath + "/chrome");
                 extractZip(downloadsFolder + "/engine.zip", profilePath + "/chrome");
@@ -985,22 +990,36 @@ void installSine(
                     ("user_pref(\"sine.latest-version\", \"" + sineVersion + "\");") << std::endl;
                 file.close();
             }
+            else if (result == -1)
+            {
+                return;
+            }
         }
         else if (strstr(steps[installStep], "Cleaning up your browser") != nullptr)
         {
-            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
+            if (!hadAdminProcess && result == 1)
             {
                 std::filesystem::remove(browserPathStr + "/defaults/pref/config-prefs.js");
                 std::filesystem::remove(browserPathStr + "config.js");
             }
+            else if (result == -1)
+            {
+                return;
+            }
         }
         else if (strstr(steps[installStep], "Cleaning up your profile") != nullptr)
         {
-            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminProfile, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
+            if (!hadAdminProcess && result == 1)
             {
                 removeDir(profilePath + "/chrome/JS");
                 removeDir(profilePath + "/chrome/utils");
                 removeDir(profilePath + "/chrome/locales");
+            }
+            else if (result == -1)
+            {
+                return;
             }
         }
         else if (
@@ -1008,9 +1027,14 @@ void installSine(
             std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "sine-mods")
             )
         {
-            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminProfile, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
+            if (!hadAdminProcess && result == 1)
             {
                 std::filesystem::remove_all(profilePath + "/chrome/sine-mods");
+            }
+            else if (result == -1)
+            {
+                return;
             }
         }
         else if (strstr(steps[installStep], "Clearing startup cache") != nullptr)
