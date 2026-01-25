@@ -832,7 +832,7 @@ bool isAdminProcessRunning() {
 #endif
 }
 
-bool requestAdminProcess(
+int requestAdminProcess(
     bool isAdmin, bool needsAdmin, std::string& browserPathStr,
     std::string& profilePath, bool shouldSaveData, bool shouldUninstall,
     bool reinstallBoot, bool showExitScreen, bool& adminProcess, bool& shouldTryAdmin,
@@ -850,13 +850,13 @@ bool requestAdminProcess(
         {
             shouldTryAdmin = false;
         }
-        return true;
+        return 1;
     }
     else if (!needsAdmin && isAdmin)
     {
-        
+        return -1;
     }
-    return false;
+    return 0;
 }
 
 void installSine(
