@@ -1133,7 +1133,7 @@ int main(int argc, char* argv[])
         }
         else if (arg == "--install-step")
         {
-            installStep = (int) argv[i + 1];
+            installStep = std::stoi(argv[i + 1]);
             ++i;
 
             ImFont* titleFont = nullptr;
