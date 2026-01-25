@@ -41,6 +41,7 @@
 #include <shlobj.h>
 #include <aclapi.h>
 #include <tlhelp32.h>
+#include <sddl.h>
 
 int main(int argc, char** argv);
 
@@ -53,10 +54,12 @@ int WINAPI WinMain(
     return main(__argc, __argv);
 }
 #else
+#include <fcntl.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <limits.h>
 #include <sys/wait.h>
+#include <sys/file.h>
 #endif
 
 #if __APPLE__
@@ -384,7 +387,23 @@ std::string shellEscape(const std::string& input)
     return out;
 }
 
-bool requestAdmin(const std::string& browserPath, const std::string& profilePath, bool shouldSaveData, bool shouldUninstall, bool reinstallBoot, bool showExitScreen)
+std::wstring s2ws(const std::string& str) {
+    if (str.empty()) return L"";
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), nullptr, 0);
+    std::wstring wstr(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), &wstr[0], size_needed);
+    return wstr;
+}
+
+bool requestAdmin(
+    const std::string& browserPath,
+    const std::string& profilePath,
+    bool shouldSaveData,
+    bool shouldUninstall,
+    bool reinstallBoot,
+    bool showExitScreen,
+    int installStep
+)
 {
 #ifdef _WIN32
     char path[MAX_PATH];
@@ -393,17 +412,20 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
     std::string parameters = "--browser \"" + browserPath + "\" "
         "--profile \"" + profilePath + "\" "
         + (shouldSaveData ? "-s " : "")
-        + (shouldUninstall ? "-u" : "")
-        + (reinstallBoot ? "" : "--no-boot")
-        + (showExitScreen ? "" : "--update");
+        + (shouldUninstall ? "-u " : "")
+        + (reinstallBoot ? "" : "--no-boot ")
+        + (showExitScreen ? "" : "--update ")
+        + "--install-step " + std::to_string(installStep);
 
-    SHELLEXECUTEINFOA sei = { sizeof(sei) };
-    sei.lpVerb = "runas";  // request admin
-    sei.lpFile = path;
-    sei.nShow = SW_NORMAL;
-    sei.lpParameters = parameters.c_str();
+    SHELLEXECUTEINFOW sei{};
+    sei.cbSize = sizeof(sei);
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+    sei.lpVerb = L"runas";
+    sei.lpFile = s2ws(std::string(path)).c_str();
+    sei.lpParameters = s2ws(parameters).c_str();
+    sei.nShow = SW_HIDE;
 
-    if (!ShellExecuteExA(&sei))
+    if (!ShellExecuteExW(&sei))
     {
         std::cerr << "Failed to request admin privileges.\n";
         return false;
@@ -414,81 +436,73 @@ bool requestAdmin(const std::string& browserPath, const std::string& profilePath
 #elif defined(__linux__)
     char exePath[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
-    if (len <= 0)
-        return false;
-
+    if (len <= 0) return false;
     exePath[len] = '\0';
 
-    // Get required environment variables from the current user session
-    const char* display = std::getenv("DISPLAY");
-    const char* xauth = std::getenv("XAUTHORITY");
-    const char* home = std::getenv("HOME");
-    const char* runtimeDir = std::getenv("XDG_RUNTIME_DIR");
-    const char* waylandDisplay = std::getenv("WAYLAND_DISPLAY");
-    const char* sessionId = std::getenv("XDG_SESSION_ID");
-    const char* xdgSeat = std::getenv("XDG_SEAT");
+    // Build program arguments
+    std::string args;
+    args += shellEscape(exePath);
+    args += " --browser " + shellEscape(browserPath);
+    args += " --profile " + shellEscape(profilePath);
+    if (shouldSaveData)   args += " -s";
+    if (shouldUninstall)  args += " -u";
+    if (!reinstallBoot)   args += " --no-boot";
+    if (!showExitScreen)  args += " --update";
+    args += " --install-step " + std::to_string(installStep);
 
-    std::string cmd = "pkexec env ";
+    // Build environment variables for pkexec
+    std::string envVars;
+    if (const char* display = std::getenv("DISPLAY")) envVars += "DISPLAY=" + std::string(display) + " ";
+    if (const char* xauth = std::getenv("XAUTHORITY")) envVars += "XAUTHORITY=" + std::string(xauth) + " ";
+    if (const char* wayland = std::getenv("WAYLAND_DISPLAY")) envVars += "WAYLAND_DISPLAY=" + std::string(wayland) + " ";
+    if (const char* runtime = std::getenv("XDG_RUNTIME_DIR")) envVars += "XDG_RUNTIME_DIR=" + std::string(runtime) + " ";
+    if (const char* home = std::getenv("HOME")) envVars += "HOME=" + std::string(home) + " ";
+    if (const char* seat = std::getenv("XDG_SEAT")) envVars += "XDG_SEAT=" + std::string(seat) + " ";
+    if (const char* session = std::getenv("XDG_SESSION_ID")) envVars += "XDG_SESSION_ID=" + std::string(session) + " ";
 
-    // Pass display variables to the root environment
-    if (const char* display = std::getenv("DISPLAY"))
-        cmd += "DISPLAY=" + std::string(display) + " ";
-    if (const char* xauth = std::getenv("XAUTHORITY"))
-        cmd += "XAUTHORITY=" + std::string(xauth) + " ";
-    if (const char* home = std::getenv("HOME"))
-        	cmd += "HOME=" + std::string(home) + " ";
-    if (const char* runtimeDir = std::getenv("XDG_RUNTIME_DIR"))
-        cmd += "XDG_RUNTIME_DIR=" + std::string(runtimeDir) + " ";
-    if (const char* waylandDisplay = std::getenv("WAYLAND_DISPLAY"))
-        cmd += "WAYLAND_DISPLAY=" + std::string(waylandDisplay) + " ";
-    if (const char* sessionId = std::getenv("XDG_SESSION_ID"))
-        cmd += "XDG_SESSION_ID=" + std::string(sessionId) + " ";
-    if (const char* xdgSeat = std::getenv("XDG_SEAT"))
-        cmd += "XDG_SEAT=" + std::string(xdgSeat) + " ";
+    // First try pkexec (GUI authentication)
+    std::string pkexecCmd = "pkexec env " + envVars + args;
+    int result = system(pkexecCmd.c_str());
 
-    // Now add the program path and its arguments
-    cmd += shellEscape(exePath);
-    cmd += " --browser " + shellEscape(browserPath);
-    cmd += " --profile " + shellEscape(profilePath);
+    if (WIFEXITED(result) && WEXITSTATUS(result) == 0)
+        return true;
 
-    if (shouldUninstall)
-        cmd += " -u";
+    // If pkexec failed with agent not found, fallback to sudo in terminal
+    if (WIFEXITED(result) && WEXITSTATUS(result) != 0)
+    {
+        // Use x-terminal-emulator or gnome-terminal or konsole
+        const char* terminal = std::getenv("TERMINAL");
+        if (!terminal) terminal = "x-terminal-emulator"; // fallback default
 
-    int result = system(cmd.c_str());
-    return WIFEXITED(result) && WEXITSTATUS(result) == 0;
+        std::string sudoCmd = std::string(terminal) + " -e \"sudo " + args + "\"";
+        result = system(sudoCmd.c_str());
+
+        return WIFEXITED(result) && WEXITSTATUS(result) == 0;
+    }
+
+    return false;
 
 #elif defined(__APPLE__)
+    // macOS version: osascript with admin privileges
     char exePath[PATH_MAX];
     uint32_t size = sizeof(exePath);
-
-    if (_NSGetExecutablePath(exePath, &size) != 0)
-        return false;
+    if (_NSGetExecutablePath(exePath, &size) != 0) return false;
 
     std::string args;
     args += "\"" + shellEscape(exePath) + "\"";
     args += " --browser \"" + shellEscape(browserPath) + "\"";
     args += " --profile \"" + shellEscape(profilePath) + "\"";
-
-    if (shouldSaveData)   args += " -s";
+    if (shouldSaveData) args += " -s";
     if (shouldUninstall) args += " -u";
-    if (!reinstallBoot)  args += " --no-boot";
+    if (!reinstallBoot) args += " --no-boot";
     if (!showExitScreen) args += " --update";
+    args += " --install-step " + std::to_string(installStep);
 
-    std::string script =
-        "do shell script \"" + shellEscape(args) +
-        "\" with administrator privileges";
-
-    std::string cmd =
-        "osascript -e \"" + shellEscape(script) + "\"";
+    std::string script = "do shell script \"" + shellEscape(args) + "\" with administrator privileges";
+    std::string cmd = "osascript -e \"" + shellEscape(script) + "\"";
 
     int result = system(cmd.c_str());
-
-    if (result == 0)
-    {
-        _exit(0);
-    }
-
-    return false;
+    return result == 0;
 
 #else
     std::cerr << "Unsupported OS.\n";
@@ -732,8 +746,417 @@ void removeDir(std::string path)
     }
 }
 
+bool markAsAdminProcess() {
+#ifdef _WIN32
+    static HANDLE adminMutex = nullptr;
+
+    if (adminMutex) {
+        return true; // already marked
+    }
+
+    SECURITY_ATTRIBUTES sa{};
+    sa.nLength = sizeof(sa);
+
+    // Admins: full access, Everyone: read/sync only
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(
+        L"D:(A;;GA;;;BA)(A;;GR;;;WD)",
+        SDDL_REVISION_1,
+        &sa.lpSecurityDescriptor,
+        nullptr
+    )) {
+        return false;
+    }
+
+    adminMutex = CreateMutexW(
+        &sa,
+        TRUE,
+        L"Global\\Sine_Installer_Admin_Instance"
+    );
+
+    return adminMutex && GetLastError() != ERROR_ALREADY_EXISTS;
+
+#else
+    static int lockFd = -1;
+
+    if (lockFd != -1) {
+        return true;
+    }
+
+    const char* lockPath =
+#ifdef __APPLE__
+        "/var/run/sine-installer-admin-instance.lock";
+#else
+        "/run/sine-installer-admin-instance.lock";
+#endif
+
+    lockFd = open(lockPath, O_CREAT | O_RDWR, 0644);
+    if (lockFd < 0) {
+        return false;
+    }
+
+    if (flock(lockFd, LOCK_EX | LOCK_NB) != 0) {
+        close(lockFd);
+        lockFd = -1;
+        return false;
+    }
+
+    return true;
+#endif
+}
+
+bool isAdminProcessRunning() {
+#ifdef _WIN32
+    HANDLE h = OpenMutexW(
+        SYNCHRONIZE,
+        FALSE,
+        L"Global\\Sine_Installer_Admin_Instance"
+    );
+
+    if (h) {
+        CloseHandle(h);
+        return true;
+    }
+    return false;
+
+#else
+    const char* lockPath =
+#ifdef __APPLE__
+        "/var/run/sine-installer-admin-instance.lock";
+#else
+        "/run/sine-installer-admin-instance.lock";
+#endif
+
+    return access(lockPath, F_OK) == 0;
+#endif
+}
+
+bool requestAdminProcess(
+    bool isAdmin, bool needsAdmin, std::string& browserPathStr,
+    std::string& profilePath, bool shouldSaveData, bool shouldUninstall,
+    bool reinstallBoot, bool showExitScreen, bool& adminProcess, bool& shouldTryAdmin,
+    int installStep, GLFWwindow*& window, bool& hadAdminProcess
+)
+{
+    if (!isAdmin && needsAdmin)
+    {
+        if (requestAdmin(browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, installStep))
+        {
+            adminProcess = true;
+            hadAdminProcess = true;
+        }
+        else
+        {
+            shouldTryAdmin = false;
+        }
+        return true;
+    }
+    else if (!needsAdmin && isAdmin)
+    {
+        glfwSetWindowShouldClose(window, true);
+        return false;
+    }
+    return false;
+}
+
+void installSine(
+    ImFont*& titleFont, ImFont*& mediumFont, ImFont*& lightFont,
+    float timeDiff, bool shouldUninstall, bool& shouldTryAdmin,
+    std::string& profilePath, bool reinstallBoot, int& adminProfile, int& adminBrowser,
+    std::string& browserPathStr, bool& isAdmin, int selectedBrowser,
+    bool showExitScreen, int& installStep, bool shouldSaveData,
+    GLFWwindow*& window, float uiScale, ImGuiIO& io, bool& adminProcess, bool& hadAdminProcess
+)
+{
+    const std::string downloadsFolder = getDownloadsFolder();
+
+    const std::string bootloaderReleases = "https://github.com/sineorg/bootloader/releases/download/v";
+    const std::string sineReleases = "https://github.com/CosmoCreeper/Sine/releases/download/v";
+
+    if (window)
+    {
+        renderHeader(titleFont, timeDiff);
+    }
+
+    if (!std::filesystem::exists(std::filesystem::path(profilePath) / "chrome"))
+    {
+        std::filesystem::create_directory(std::filesystem::path(profilePath) / "chrome");
+    }
+
+    std::vector<char*> steps;
+    if (shouldUninstall)
+    {
+        steps.insert(steps.end(), {
+            "Cleaning up your browser...",
+            "Cleaning up your profile...",
+            "Removing mods...",
+            "Clearing startup cache..."
+            });
+    }
+    else
+    {
+        if (reinstallBoot)
+        {
+            steps.insert(steps.end(), {
+                "Downloading program.zip...",
+                "Cleaning up your browser...",
+                "Configuring your browser..."
+                });
+        }
+
+        steps.insert(steps.end(), {
+            "Downloading profile.zip...",
+            "Downloading engine.zip...",
+            "Downloading locales.zip...",
+            "Cleaning up your profile...",
+            "Configuring your profile...",
+            "Removing mods...",
+            "Clearing startup cache...",
+            "Cleaning up...",
+            });
+    }
+    steps.insert(steps.end(), { "Finished." });
+
+    if (adminProfile == -1)
+    {
+        adminProfile = !canWriteToFolder(profilePath) ? 1 : 0;
+    }
+
+    if (adminBrowser == -1)
+    {
+        adminBrowser = (reinstallBoot || shouldUninstall) && !canWriteToFolder(browserPathStr) ? 1 : 0;
+    }
+
+    bool browserOpen = isProcessRunning(toLowercase(browsers[selectedBrowser].first) + (getOS() == "win32" ? ".exe" : ""));
+
+    if ((!browserOpen || !showExitScreen) && shouldTryAdmin && !adminProcess)
+    {
+        if (window)
+        {
+            renderStepHeader(steps[installStep], mediumFont, timeDiff);
+            const float totalWidth = ImGui::GetContentRegionAvail().x;
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+            ImGui::ProgressBar((installStep + 1) / (float)steps.size(), ImVec2(totalWidth * 0.6f, 30));
+            ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
+        }
+
+        if (strstr(steps[installStep], "program.zip") != nullptr)
+        {
+            const std::string fileName = "/program.zip";
+            downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
+        }
+        else if (strstr(steps[installStep], "Configuring your browser") != nullptr)
+        {
+            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            {
+                extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
+            }
+        }
+        else if (strstr(steps[installStep], "profile.zip") != nullptr)
+        {
+            const std::string fileName = "/profile.zip";
+            downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
+        }
+        else if (strstr(steps[installStep], "engine.zip") != nullptr)
+        {
+            const std::string fileName = "/engine.zip";
+            downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
+        }
+        else if (strstr(steps[installStep], "locales.zip") != nullptr)
+        {
+            const std::string fileName = "/locales.zip";
+            downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
+        }
+        else if (strstr(steps[installStep], "Configuring your profile") != nullptr)
+        {
+            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminProfile, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            {
+                extractZip(downloadsFolder + "/profile.zip", profilePath + "/chrome");
+                extractZip(downloadsFolder + "/engine.zip", profilePath + "/chrome");
+                extractZip(downloadsFolder + "/locales.zip", profilePath + "/chrome");
+
+                std::ofstream file(profilePath + "/prefs.js", std::ios::app);
+                file <<
+                    ("user_pref(\"sine.is-cosine\", " + std::string(isCosine ? "true" : "false") + ");") << std::endl <<
+                    ("user_pref(\"sine.version\", \"" + sineVersion + "\");") << std::endl <<
+                    ("user_pref(\"sine.latest-version\", \"" + sineVersion + "\");") << std::endl;
+                file.close();
+            }
+        }
+        else if (strstr(steps[installStep], "Cleaning up your browser") != nullptr)
+        {
+            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            {
+                std::filesystem::remove(browserPathStr + "/defaults/pref/config-prefs.js");
+                std::filesystem::remove(browserPathStr + "config.js");
+            }
+        }
+        else if (strstr(steps[installStep], "Cleaning up your profile") != nullptr)
+        {
+            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminProfile, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            {
+                removeDir(profilePath + "/chrome/JS");
+                removeDir(profilePath + "/chrome/utils");
+                removeDir(profilePath + "/chrome/locales");
+            }
+        }
+        else if (
+            !shouldSaveData && strstr(steps[installStep], "Removing mods") != nullptr &&
+            std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "sine-mods")
+            )
+        {
+            if (hadAdminProcess || !requestAdminProcess(isAdmin, adminProfile, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess))
+            {
+                std::filesystem::remove_all(profilePath + "/chrome/sine-mods");
+            }
+        }
+        else if (strstr(steps[installStep], "Clearing startup cache") != nullptr)
+        {
+            if (getOS() == "win32")
+            {
+                size_t pos = profilePath.find("Roaming");
+                removeDir(profilePath.replace(pos, 7, "Local") + "/startupCache");
+            }
+            else if (getOS() == "darwin")
+            {
+                size_t pos = profilePath.find("Application Support");
+                removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
+            }
+        }
+        else if (strstr(steps[installStep], "Cleaning up") != nullptr)
+        {
+            std::filesystem::remove(downloadsFolder + "/program.zip");
+            std::filesystem::remove(downloadsFolder + "/profile.zip");
+            std::filesystem::remove(downloadsFolder + "/engine.zip");
+            std::filesystem::remove(downloadsFolder + "/locales.zip");
+        }
+        else if (window)
+        {
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
+            ImGui::PushFont(lightFont);
+            ImGui::Text("If Sine does not appear in the settings page, you may need to clear startup cache");
+            ImGui::Text("(visit about:support and click 'Clear Startup Cache', you must do this on Linux).");
+            ImGui::PopFont();
+        }
+
+        if (installStep != steps.size() - 1)
+        {
+            installStep += 1;
+        }
+    }
+    else if (window && browserOpen && showExitScreen)
+    {
+        renderStepHeader("Please close your browser before installing.", mediumFont, timeDiff);
+        ImGui::PushFont(lightFont);
+        ImGui::Text("Listening for browser to be closed...");
+        ImGui::PopFont();
+    }
+    else if (adminProcess)
+    {
+        adminProcess = isAdminProcessRunning();
+    }
+    else if (window)
+    {
+        renderStepHeader("Failed to gain required privileges.", mediumFont, timeDiff);
+        if (ImGui::Button("Retry"))
+        {
+            shouldTryAdmin = true;
+        }
+    }
+
+    if (window)
+    {
+        renderFooter(mediumFont, uiScale, io.DisplaySize, (!adminProcess && !shouldTryAdmin) || steps.size() != installStep + 1, adminProcess);
+    }
+
+    if (window && steps.size() == installStep + 1 && !showExitScreen)
+    {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+}
+
 int main(int argc, char* argv[])
 {
+    int selectedBrowser = 0;
+    int selectedVersion = 0;
+    int selectedProfile = 0;
+    char browserPath[128] = "";
+    char profileFolderPath[128] = "";
+    char reason[128] = "";
+    bool showHiddenProfiles = false;
+    bool shouldReset = true;
+    std::string browserPathStr;
+    std::string profilePath;
+    bool reinstallBoot = true;
+    bool shouldSaveData = false;
+    bool shouldUninstall = false;
+    int shouldNotify = 0;
+    bool isAdmin = isUserAdmin();
+    bool shouldTryAdmin = true;
+    int installStep = 0;
+    int adminProfile = -1;
+    int adminBrowser = -1;
+    bool adminProcess = false;
+    bool hadAdminProcess = false;
+
+    bool showExitScreen = true;
+
+    for (int i = 1; i < argc; ++i)
+    {
+        std::string arg = argv[i];
+        if (arg == "--browser" && i + 1 < argc)
+        {
+            browserPathStr = argv[i + 1];
+            ++i;
+        }
+        else if (arg == "--profile" && i + 1 < argc)
+        {
+            profilePath = argv[i + 1];
+            ++i;
+        }
+        else if (arg == "--save" || arg == "-s")
+        {
+            shouldSaveData = true;
+        }
+        else if (arg == "--uninstall" || arg == "-u")
+        {
+            shouldUninstall = true;
+        }
+        else if (arg == "--no-boot")
+        {
+            reinstallBoot = false;
+        }
+        else if (arg == "--update")
+        {
+            showExitScreen = false;
+        }
+        else if (arg == "--install-step")
+        {
+            installStep = (int) argv[i + 1];
+            ++i;
+
+            ImFont* titleFont = nullptr;
+            ImFont* mediumFont = nullptr;
+            ImFont* lightFont = nullptr;
+
+            GLFWwindow* window = nullptr;
+            float uiScale = 0;
+            ImGuiIO real_io;
+            ImGuiIO& io = real_io;
+
+            installSine(
+                titleFont, mediumFont, lightFont,
+                0, shouldUninstall, shouldTryAdmin,
+                profilePath, reinstallBoot, adminProfile, adminBrowser,
+                browserPathStr, isAdmin, selectedBrowser,
+                showExitScreen, installStep, shouldSaveData,
+                window, uiScale, io, adminProcess, hadAdminProcess
+            );
+            return 0;
+        }
+    }
+
     if (!glfwInit()) return -1;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -816,62 +1239,6 @@ int main(int argc, char* argv[])
     );
 
     auto begin = high_resolution_clock::now();
-    int selectedBrowser = 0;
-    int selectedVersion = 0;
-    int selectedProfile = 0;
-    char browserPath[128] = "";
-    char profileFolderPath[128] = "";
-    char reason[128] = "";
-    bool showHiddenProfiles = false;
-    bool shouldReset = true;
-    std::string browserPathStr;
-    std::string profilePath;
-    bool reinstallBoot = true;
-    bool shouldSaveData = false;
-    bool shouldUninstall = false;
-    int shouldNotify = 0;
-    bool isAdmin = isUserAdmin();
-    bool shouldTryAdmin = true;
-    int installStep = 0;
-    int needsAdmin = -1;
-
-    bool showExitScreen = true;
-
-    const std::string downloadsFolder = getDownloadsFolder();
-
-    const std::string bootloaderReleases = "https://github.com/sineorg/bootloader/releases/download/v";
-    const std::string sineReleases = "https://github.com/CosmoCreeper/Sine/releases/download/v";
-
-    for (int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
-        if (arg == "--browser" && i + 1 < argc)
-        {
-            browserPathStr = argv[i + 1];
-            ++i;
-        }
-        else if (arg == "--profile" && i + 1 < argc)
-        {
-            profilePath = argv[i + 1];
-            ++i;
-        }
-        else if (arg == "--save" || arg == "-s")
-        {
-            shouldSaveData = true;
-        }
-        else if (arg == "--uninstall" || arg == "-u")
-        {
-            shouldUninstall = true;
-        }
-        else if (arg == "--no-boot")
-        {
-            reinstallBoot = false;
-        }
-        else if (arg == "--update")
-        {
-            showExitScreen = false;
-        }
-    }
 
     if (!browserPathStr.empty() && !profilePath.empty())
     {
@@ -1136,183 +1503,15 @@ int main(int argc, char* argv[])
         }
         else if (state == State::SIX)
         {
-            renderHeader(titleFont, timeDiff);
-            
-            if (!std::filesystem::exists(std::filesystem::path(profilePath) / "chrome"))
-            {
-                std::filesystem::create_directory(std::filesystem::path(profilePath) / "chrome");
-            }
-
-            std::vector<char*> steps;
-            if (shouldUninstall)
-            {
-                steps.insert(steps.end(), {
-                    "Cleaning up your browser...",
-                    "Cleaning up your profile...",
-                    "Removing mods...",
-                    "Clearing startup cache..."
-                });
-            }
-            else
-            {
-                if (reinstallBoot)
-                {
-                    steps.insert(steps.end(), {
-                        "Downloading program.zip...",
-                        "Configuring your browser..."
-                    });
-                }
-
-                steps.insert(steps.end(), {
-                    "Downloading profile.zip...",
-                    "Downloading engine.zip...",
-                    "Downloading locales.zip...",
-                    "Cleaning up your profile...",
-                    "Configuring your profile...",
-                    "Removing mods...",
-                    "Clearing startup cache...",
-                    "Cleaning up...",
-                });
-            }
-            steps.insert(steps.end(), { "Finished." });
-
-            if (needsAdmin == -1)
-            {
-                needsAdmin = ((reinstallBoot || shouldUninstall) && !canWriteToFolder(browserPathStr)) || !canWriteToFolder(profilePath) ? 1 : 0;
-            }
-
-            bool hasPerms = isAdmin || !needsAdmin;
-            bool browserOpen = isProcessRunning(toLowercase(browsers[selectedBrowser].first) + (getOS() == "win32" ? ".exe" : ""));
-
-            if (hasPerms && (!browserOpen || !showExitScreen))
-            {
-                renderStepHeader(steps[installStep], mediumFont, timeDiff);
-                const float totalWidth = ImGui::GetContentRegionAvail().x;
-                ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                ImGui::ProgressBar((installStep + 1) / (float)steps.size(), ImVec2(totalWidth * 0.6f, 30));
-                ImGui::PopStyleColor();
-                ImGui::PopStyleColor();
-
-                if (strstr(steps[installStep], "program.zip") != nullptr)
-                {
-                    const std::string fileName = "/program.zip";
-                    downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
-                }
-                else if (strstr(steps[installStep], "Configuring your browser") != nullptr)
-                {
-                    extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
-                }
-                else if (strstr(steps[installStep], "profile.zip") != nullptr)
-                {
-                    const std::string fileName = "/profile.zip";
-                    downloadFile(bootloaderReleases + bootVersion + fileName, downloadsFolder + fileName);
-                }
-                else if (strstr(steps[installStep], "engine.zip") != nullptr)
-                {
-                    const std::string fileName = "/engine.zip";
-                    downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
-                }
-                else if (strstr(steps[installStep], "locales.zip") != nullptr)
-                {
-                    const std::string fileName = "/locales.zip";
-                    downloadFile(sineReleases + sineVersion + fileName, downloadsFolder + fileName);
-                }
-                else if (strstr(steps[installStep], "Configuring your profile") != nullptr)
-                {
-                    extractZip(downloadsFolder + "/profile.zip", profilePath + "/chrome");
-                    extractZip(downloadsFolder + "/engine.zip", profilePath + "/chrome");
-                    extractZip(downloadsFolder + "/locales.zip", profilePath + "/chrome");
-
-                    std::ofstream file(profilePath + "/prefs.js", std::ios::app);
-                    file <<
-                        ("user_pref(\"sine.is-cosine\", " + std::string(isCosine ? "true" : "false") + ");") << std::endl <<
-                        ("user_pref(\"sine.version\", \"" + sineVersion + "\");") << std::endl <<
-                        ("user_pref(\"sine.latest-version\", \"" + sineVersion + "\");") << std::endl;
-                    file.close();
-                }
-                else if (strstr(steps[installStep], "Cleaning up your browser") != nullptr)
-                {
-                    std::filesystem::remove(browserPathStr + "/defaults/pref/config-prefs.js");
-                    std::filesystem::remove(browserPathStr + "config.js");
-                }
-                else if (strstr(steps[installStep], "Cleaning up your profile") != nullptr)
-                {
-                    removeDir(profilePath + "/chrome/JS");
-                    removeDir(profilePath + "/chrome/utils");
-                    removeDir(profilePath + "/chrome/locales");
-                }
-                else if (
-                    !shouldSaveData && strstr(steps[installStep], "Removing mods") != nullptr &&
-                    std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "sine-mods")
-                )
-                {
-                    std::filesystem::remove_all(profilePath + "/chrome/sine-mods");
-                }
-                else if (strstr(steps[installStep], "Clearing startup cache") != nullptr)
-                {
-                    if (getOS() == "win32")
-                    {
-                        size_t pos = profilePath.find("Roaming");
-                        removeDir(profilePath.replace(pos, 7, "Local") + "/startupCache");
-                    }
-                    else if (getOS() == "darwin")
-                    {
-                        size_t pos = profilePath.find("Application Support");
-                        removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
-                    }
-                }
-                else if (strstr(steps[installStep], "Cleaning up") != nullptr)
-                {
-                    std::filesystem::remove(downloadsFolder + "/program.zip");
-                    std::filesystem::remove(downloadsFolder + "/profile.zip");
-                    std::filesystem::remove(downloadsFolder + "/engine.zip");
-                    std::filesystem::remove(downloadsFolder + "/locales.zip");
-                }
-                else
-                {
-                    ImGui::Dummy(ImVec2(0.0f, 20.0f));
-                    ImGui::PushFont(lightFont);
-                    ImGui::Text("If Sine does not appear in the settings page, you may need to clear startup cache");
-                    ImGui::Text("(visit about:support and click 'Clear Startup Cache', you must do this on Linux).");
-                    ImGui::PopFont();
-                }
-
-                if (installStep != steps.size() - 1)
-                {
-                    installStep += 1;
-                }
-            }
-            else if (browserOpen && showExitScreen)
-            {
-                renderStepHeader("Please close your browser before installing.", mediumFont, timeDiff);
-                ImGui::PushFont(lightFont);
-                ImGui::Text("Listening for browser to be closed...");
-                ImGui::PopFont();
-            }
-            else if (shouldTryAdmin)
-            {
-                shouldTryAdmin = false;
-                if (requestAdmin(browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen))
-                {
-                    glfwSetWindowShouldClose(window, GLFW_TRUE);
-                }
-            }
-            else
-            {
-                renderStepHeader("Failed to gain required privileges.", mediumFont, timeDiff);
-                if (ImGui::Button("Retry"))
-                {
-                    shouldTryAdmin = true;
-                }
-            }
-
-            renderFooter(mediumFont, uiScale, io.DisplaySize, (!hasPerms && !shouldTryAdmin) || steps.size() != installStep + 1, hasPerms);
-
-            if (steps.size() == installStep + 1 && !showExitScreen)
-            {
-                glfwSetWindowShouldClose(window, GLFW_TRUE);
-            }
+            // Install Sine.
+            installSine(
+                titleFont, mediumFont, lightFont,
+                timeDiff, shouldUninstall, shouldTryAdmin,
+                profilePath, reinstallBoot, adminProfile, adminBrowser,
+                browserPathStr, isAdmin, selectedBrowser,
+                showExitScreen, installStep, shouldSaveData,
+                window, uiScale, io, adminProcess, hadAdminProcess
+            );
         }
         else if (state == State::LAST && showExitScreen)
         {
