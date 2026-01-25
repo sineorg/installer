@@ -950,7 +950,7 @@ void installSine(
         else if (strstr(steps[installStep], "Configuring your browser") != nullptr)
         {
             int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
-            if (!hadAdminProcess && result == 1
+            if (!hadAdminProcess && result == 1)
             {
                 extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
             }
