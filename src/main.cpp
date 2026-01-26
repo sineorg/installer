@@ -1357,28 +1357,31 @@ int main(int argc, char* argv[])
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
             ImGui::PushFont(bodyFont);
             struct stat browserBuffer;
-            if (getOS() != "linux" && stat(browserPath, &browserBuffer) == 0)
+            if (getOS() != "linux")
             {
-                std::string browserDataStr = (std::filesystem::path(browserPath) / "browser").string();
-                char browserData[128];
-                strncpy(browserData, browserDataStr.c_str(), sizeof(browserData) - 1);
-                browserData[sizeof(browserData) - 1] = '\0';
-
-                if ((browserBuffer.st_mode & S_IFMT) == S_IFREG)
+                if (stat(browserPath, &browserBuffer) == 0)
                 {
-                    ImGui::Text("Path should be a folder, not a file.");
+                    std::string browserDataStr = (std::filesystem::path(browserPath) / "browser").string();
+                    char browserData[128];
+                    strncpy(browserData, browserDataStr.c_str(), sizeof(browserData) - 1);
+                    browserData[sizeof(browserData) - 1] = '\0';
+    
+                    if ((browserBuffer.st_mode & S_IFMT) == S_IFREG)
+                    {
+                        ImGui::Text("Path should be a folder, not a file.");
+                        hasError = true;
+                    }
+                    else if (stat(browserData, &browserBuffer) != 0 && getOS() != "darwin")
+                    {
+                        ImGui::Text("Path should contain browser-like contents.");
+                        hasError = true;
+                    }
+                }
+                else
+                {
+                    ImGui::Text("Path does not exist.");
                     hasError = true;
                 }
-                else if (stat(browserData, &browserBuffer) != 0 && getOS() != "darwin")
-                {
-                    ImGui::Text("Path should contain browser-like contents.");
-                    hasError = true;
-                }
-            }
-            else if (getOS() != "linux")
-            {
-                ImGui::Text("Path does not exist.");
-                hasError = true;
             }
             ImGui::PopFont();
             ImGui::PopStyleColor();
