@@ -1272,6 +1272,8 @@ int main(int argc, char* argv[])
         state = State::SIX;
     }
 
+    std::error_code ec;
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -1355,7 +1357,7 @@ int main(int argc, char* argv[])
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
             ImGui::PushFont(bodyFont);
             struct stat browserBuffer;
-            if (stat(browserPath, &browserBuffer) == 0)
+            if (getOS() != "linux" && stat(browserPath, &browserBuffer) == 0)
             {
                 std::string browserDataStr = (std::filesystem::path(browserPath) / "browser").string();
                 char browserData[128];
@@ -1373,7 +1375,7 @@ int main(int argc, char* argv[])
                     hasError = true;
                 }
             }
-            else
+            else if (getOS() != "linux")
             {
                 ImGui::Text("Path does not exist.");
                 hasError = true;
@@ -1469,12 +1471,12 @@ int main(int argc, char* argv[])
         }
         else if (state == State::FIVE)
         {
-            if (std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "JS"))
+            if (std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "JS", ec))
             {
                 renderHeader(titleFont, timeDiff);
                 renderStepHeader("Old Sine installation detected:", mediumFont, timeDiff);
                 ImGui::PushFont(bodyFont);
-                if (std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "sine-mods"))
+                if (std::filesystem::exists(std::filesystem::path(profilePath) / "chrome" / "sine-mods", ec))
                 {
                     ImGui::Checkbox("Save old mods", &shouldSaveData);
                 }
