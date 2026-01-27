@@ -14,7 +14,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
     {"Firefox", {
         {"profile", {
             {"win32", { "Mozilla\\Firefox" }},
-            {"linux", { ".mozilla/firefox" }},
+            {"linux", { ".mozilla/firefox", "snap/firefox/common/.mozilla/firefox" }},
             {"darwin", { "Firefox" }}
         }},
         {"Stable", {
@@ -22,7 +22,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
                 "C:\\Program Files\\Mozilla Firefox",
                 "C:\\Program Files (x86)\\Mozilla Firefox"
             }},
-            {"linux", { "/usr/lib/firefox/", "/opt/firefox/", "/root/snap/firefox/" }},
+            {"linux", { "/usr/lib/firefox", "/opt/firefox", "/snap/firefox/6565/usr/lib/firefox" }},
             {"darwin", { "/Applications/Firefox.app/Contents/Resources" }}
         }},
         {"Developer Edition", {
@@ -30,7 +30,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
                 "C:\\Program Files\\Firefox Developer Edition",
                 "C:\\Program Files (x86)\\Firefox Developer Edition"
             }},
-            {"linux", { "/opt/firefox-developer-edition/" }},
+            {"linux", { "/opt/firefox-developer-edition" }},
             {"darwin", { "/Applications/Firefox Developer Edition.app/Contents/Resources" }}
         }},
         {"Nightly", {
@@ -38,7 +38,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
                 "C:\\Program Files\\Firefox Nightly",
                 "C:\\Program Files (x86)\\Firefox Nightly"
             }},
-            {"linux", { "/opt/firefox-nightly/" }},
+            {"linux", { "/opt/firefox-nightly" }},
             {"darwin", { "/Applications/Firefox Nightly.app/Contents/Resources" }}
         }}
     }},
@@ -53,7 +53,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
                 "C:\\Program Files\\Ablaze Floorp",
                 "C:\\Program Files (x86)\\Ablaze Floorp"
             }},
-            {"linux", { "/opt/floorp/" }},
+            {"linux", { "/opt/floorp" }},
             {"darwin", { "/Applications/Floorp.app/Contents/Resources" }}
         }}
     }},
@@ -65,12 +65,12 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
         }},
         {"Stable", {
             {"win32", { homePath + "\\AppData\\Local\\Mullvad\\MullvadBrowser\\Release" }},
-            {"linux", { "/opt/mullvad-browser/" }},
+            {"linux", { "/opt/mullvad-browser" }},
             {"darwin", { "/Applications/Mullvad Browser.app/Contents/Resources" }}
         }},
         {"Alpha", {
             {"win32", { homePath + "\\AppData\\Local\\Mullvad\\MullvadBrowser\\Alpha" }},
-            {"linux", { "/opt/mullvad-browser-alpha/" }},
+            {"linux", { "/opt/mullvad-browser-alpha" }},
             {"darwin", { "/Applications/Mullvad Browser Alpha.app/Contents/Resources" }}
         }}
     }},
@@ -82,7 +82,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
         }},
         {"Stable", {
             {"win32", { "C:\\Program Files\\Waterfox", "C:\\Program Files (x86)\\Waterfox" }},
-            {"linux", { "/opt/waterfox/" }},
+            {"linux", { "/opt/waterfox" }},
             {"darwin", { "/Applications/Waterfox.app/Contents/Resources" }}
         }}
     }},
@@ -97,7 +97,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
                 "C:\\Program Files\\Zen Browser",
                 "C:\\Program Files (x86)\\Zen Browser"
             }},
-            {"linux", { "/opt/zen-browser-bin/", "/opt/zen-browser/", "/opt/zen/" }},
+            {"linux", { "/opt/zen-browser-bin", "/opt/zen-browser", "/opt/zen" }},
             {"darwin", {
                 "/Applications/Zen Browser.app/contents/resources",
                 "/Applications/Zen.app/Contents/Resources"
@@ -108,7 +108,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
                 "C:\\Program Files\\Zen Twilight",
                 "C:\\Program Files (x86)\\Zen Twilight"
             }},
-            {"linux", { "/opt/zen-twilight/", "/opt/zen-browser-twilight/" }},
+            {"linux", { "/opt/zen-twilight", "/opt/zen-browser-twilight" }},
             {"darwin", {
                 "/Applications/Zen Browser.app/Twilight/contents/resources",
                 "/Applications/Zen.app/Twilight/Contents/Resources",
