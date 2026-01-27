@@ -135,7 +135,7 @@ std::string getOS()
     return "win32";
 #elif defined(__APPLE__) || defined(__MACH__)
     return "darwin";
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__linux)
     return "linux";
 #else
     return "unsupported";
