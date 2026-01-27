@@ -150,36 +150,55 @@ std::string getBrowserLocation(int browserIndex, int versionIndex)
     {
         if (std::filesystem::exists(path))
         {
+            if (path.contains("/snap/"))
+            {
+                return "/root/snap/firefox";
+            }
             return path;
         }
     }
     return "";
 }
 
-std::string getProfileLocation(int browserIndex)
-{
+std::string getProfileLocation(int browserIndex) {
     std::string os = getOS();
-    std::string profilePath = browsers[browserIndex].second[0].second.find(os)->second[0];
-    
+    std::vector<std::string> profilePaths = browsers[browserIndex].second[0].second.find(os)->second;
+
+    std::filesystem::path home;
     if (os == "win32")
     {
-        std::filesystem::path appData = std::getenv("APPDATA");
-        profilePath = (appData / profilePath / "Profiles").string();
+        home = std::getenv("APPDATA");
     }
     else
     {
-        std::filesystem::path home = std::getenv("HOME");
-        if (os == "darwin")
+        home = std::getenv("HOME");
+    }
+
+    for (std::string profilePath : profilePaths)
+    {
+        if (os == "win32")
         {
-            profilePath = (home / "Library" / "Application Support" / profilePath / "Profiles").string();
+            profilePath = (home / profilePath / "Profiles").string();
         }
-        else if (os == "linux")
+        else
         {
-            profilePath = (home / profilePath).string();
+            if (os == "darwin")
+            {
+                profilePath = (home / "Library" / "Application Support" / profilePath / "Profiles").string();
+            }
+            else if (os == "linux")
+            {
+                profilePath = (home / profilePath).string();
+            }
+        }
+
+        if (std::filesystem::exists(profilePath))
+        {
+            return profilePath;
         }
     }
 
-    return profilePath;
+    return "";
 }
 
 std::string toLowercase(std::string str) {
@@ -455,7 +474,8 @@ bool requestAdmin(
     if (shouldUninstall)  args += " -u";
     if (!reinstallBoot)   args += " --no-boot";
     if (!showExitScreen)  args += " --update";
-    args += " --install-step " + std::to_string(installStep);
+    if (adminBrowser)     args += " --admin-browser";
+    args += " --install-step " + shellEscape(std::to_string(installStep));
 
     // Build environment variables for pkexec
     std::string envVars;
@@ -503,7 +523,8 @@ bool requestAdmin(
     if (shouldUninstall) args += " -u";
     if (!reinstallBoot) args += " --no-boot";
     if (!showExitScreen) args += " --update";
-    args += " --install-step " + std::to_string(installStep);
+    if (adminBrowser) args += " --admin-browser";
+    args += " --install-step " + shellEscape(std::to_string(installStep));
 
     std::string script = "do shell script \"" + shellEscape(args) + "\" with administrator privileges";
     std::string cmd = "osascript -e \"" + shellEscape(script) + "\"";
@@ -629,21 +650,9 @@ bool downloadFile(const std::string& url, const std::string& outputPath)
     return (res == CURLE_OK);
 }
 
-void extractZip(const std::string& zipPath, const std::string& outputDir, const std::string& checkIfExists = "")
+void extractZip(const std::string& zipPath, const std::string& outputDir)
 {
     std::filesystem::create_directories(outputDir);
-    fixFilePerms(outputDir);
-
-    if (checkIfExists != "" && std::filesystem::exists(checkIfExists))
-    {
-        std::filesystem::permissions(
-            checkIfExists,
-            std::filesystem::perms::owner_write,
-            std::filesystem::perm_options::add
-        );
-    
-        std::filesystem::remove(checkIfExists);
-    }
 
     void* reader = mz_zip_reader_create();
     mz_zip_reader_open_file(reader, zipPath.c_str());
@@ -659,30 +668,32 @@ void extractZip(const std::string& zipPath, const std::string& outputDir, const 
         if (mz_zip_reader_entry_is_dir(reader) == MZ_OK)
         {
             std::filesystem::create_directories(outPath);
-            fixFilePerms(outPath);
         }
         else
         {
-            std::filesystem::create_directories(
-                std::filesystem::path(outPath).parent_path());
+            std::filesystem::create_directories(std::filesystem::path(outPath).parent_path());
 
-            fixFilePerms(std::filesystem::path(outPath).parent_path().string());
-
-            // Read entry data into buffer
             mz_zip_reader_entry_open(reader);
 
             std::vector<uint8_t> buffer(file_info->uncompressed_size);
             int32_t bytes_read = mz_zip_reader_entry_read(reader, buffer.data(), buffer.size());
 
+            if (bytes_read < 0) {
+                std::cerr << "Error reading entry data: " << bytes_read << std::endl;
+                mz_zip_reader_entry_close(reader);
+                return;
+            }
+
             mz_zip_reader_entry_close(reader);
 
-            // Write buffer to file
             std::ofstream outFile(outPath, std::ios::binary);
-            outFile.write(reinterpret_cast<char*>(buffer.data()), bytes_read);
-            outFile.sync_with_stdio();
-            outFile.close();
+            if (!outFile.is_open()) {
+                std::cerr << "Failed to open output file: " << outPath << std::endl;
+                return;
+            }
 
-            fixFilePerms(outPath);
+            outFile.write(reinterpret_cast<char*>(buffer.data()), bytes_read);
+            outFile.close();
         }
     } while (mz_zip_reader_goto_next_entry(reader) == MZ_OK);
 
@@ -920,7 +931,6 @@ void installSine(
             "Downloading profile.zip...",
             "Downloading engine.zip...",
             "Downloading locales.zip...",
-            "Cleaning up your profile...",
             "Configuring your profile...",
             "Removing mods...",
             "Clearing startup cache...",
@@ -962,7 +972,7 @@ void installSine(
                 int result = requestAdminProcess(isAdmin, adminBrowser, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot, showExitScreen, adminProcess, shouldTryAdmin, installStep, window, hadAdminProcess);
                 if (result == 1)
                 {
-                    extractZip(downloadsFolder + "/program.zip", browserPathStr, browserPathStr + "/config.js");
+                    extractZip(downloadsFolder + "/program.zip", browserPathStr);
                     nextStep = true;
                 }
                 else if (result == -1)
@@ -1329,8 +1339,7 @@ int main(int argc, char* argv[])
             {
                 state = State::THREE;
             }
-            else
-            {
+            else {
                 renderHeader(titleFont, timeDiff);
                 renderStepHeader("Pick your browser version", mediumFont, timeDiff);
                 renderOptions(browserVersions, selectedVersion, bodyFont);
