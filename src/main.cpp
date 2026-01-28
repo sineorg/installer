@@ -628,7 +628,10 @@ size_t writeData(void* ptr, size_t size, size_t nmemb, void* stream)
 bool downloadFile(const std::string& url, const std::string& outputPath)
 {
     CURL* curl = curl_easy_init();
-    if (!curl) return false;
+    if (!curl) {
+        std::cerr << "Failed to init curl: " << std::endl;
+        return false;
+    }
 
     std::ofstream file(outputPath, std::ios::binary);
     if (!file.is_open()) {
