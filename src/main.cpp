@@ -631,7 +631,10 @@ bool downloadFile(const std::string& url, const std::string& outputPath)
     if (!curl) return false;
 
     std::ofstream file(outputPath, std::ios::binary);
-    if (!file.is_open()) return false;
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << outputPath << std::endl;
+        return false;
+    }
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeData);
@@ -641,11 +644,6 @@ bool downloadFile(const std::string& url, const std::string& outputPath)
     CURLcode res = curl_easy_perform(curl);
     curl_easy_cleanup(curl);
     file.close();
-
-    if (res == CURLE_OK)
-    {
-        fixFilePerms(outputPath);
-    }
 
     return (res == CURLE_OK);
 }
