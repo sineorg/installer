@@ -906,7 +906,7 @@ void installSine(
         std::filesystem::create_directory(std::filesystem::path(profilePath) / "chrome");
     }
 
-    std::vector<char*> steps;
+    std::vector<const char*> steps;
     if (shouldUninstall)
     {
         steps.insert(steps.end(), {
