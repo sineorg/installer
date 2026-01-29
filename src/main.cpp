@@ -477,18 +477,8 @@ bool requestAdmin(
     if (adminBrowser)     args += " --admin-browser";
     args += " --install-step " + shellEscape(std::to_string(installStep));
 
-    // Build environment variables for pkexec
-    std::string envVars;
-    if (const char* display = std::getenv("DISPLAY")) envVars += "DISPLAY=" + std::string(display) + " ";
-    if (const char* xauth = std::getenv("XAUTHORITY")) envVars += "XAUTHORITY=" + std::string(xauth) + " ";
-    if (const char* wayland = std::getenv("WAYLAND_DISPLAY")) envVars += "WAYLAND_DISPLAY=" + std::string(wayland) + " ";
-    if (const char* runtime = std::getenv("XDG_RUNTIME_DIR")) envVars += "XDG_RUNTIME_DIR=" + std::string(runtime) + " ";
-    if (const char* home = std::getenv("HOME")) envVars += "HOME=" + std::string(home) + " ";
-    if (const char* seat = std::getenv("XDG_SEAT")) envVars += "XDG_SEAT=" + std::string(seat) + " ";
-    if (const char* session = std::getenv("XDG_SESSION_ID")) envVars += "XDG_SESSION_ID=" + std::string(session) + " ";
-
     // First try pkexec (GUI authentication)
-    std::string pkexecCmd = "pkexec env " + envVars + args;
+    std::string pkexecCmd = "pkexec " + args;
     int result = system(pkexecCmd.c_str());
 
     if (WIFEXITED(result) && WEXITSTATUS(result) == 0)
