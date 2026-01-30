@@ -1059,7 +1059,8 @@ void installSine(
             {
                 installStep += 1;
             }
-            else
+
+            if (window)
             {
                 nextStep = true;
             }
