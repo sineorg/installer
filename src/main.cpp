@@ -485,7 +485,7 @@ bool requestAdmin(
         return true;
 
     // If pkexec failed with agent not found, fallback to sudo in terminal
-    if (WIFEXITED(result) && WEXITSTATUS(result) != 1)
+    if (WIFEXITED(result) && WEXITSTATUS(result) != 0)
     {
         // Use x-terminal-emulator or gnome-terminal or konsole
         const char* terminal = std::getenv("TERMINAL");
