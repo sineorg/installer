@@ -620,7 +620,7 @@ void installSine(
 
         std::this_thread::sleep_for(500ms);
 
-        if (!isProcessRunning("updater" + (getOS() == "win32" ? ".bat" : ".sh")))
+        if (!isProcessRunning(std::string("updater") + (getOS() == "win32" ? ".bat" : ".sh")))
         {
             installStep = steps.size() - 1;
         }
