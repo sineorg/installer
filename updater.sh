@@ -20,6 +20,9 @@ while [[ $# -gt 0 ]]; do
     -s)
       saveData=true
       ;;
+    -u)
+      uninstall=true
+      ;;
     --browser)
       browserPath="$2"
       shift
@@ -63,22 +66,24 @@ if [[ "$(id -u)" -ne 0 ]]; then
     rm -rf "$chromeFolder/sine-mods"
   fi
 
-  # Downloads
-  curl -fsSL "$bootloaderLink/program.zip" -o program.zip
-  curl -fsSL "$bootloaderLink/profile.zip" -o profile.zip
+  if ! $uninstall; then
+    # Downloads
+    curl -fsSL "$bootloaderLink/program.zip" -o program.zip
+    curl -fsSL "$bootloaderLink/profile.zip" -o profile.zip
 
-  curl -fsSL "$sineLink/engine.zip" -o engine.zip
-  curl -fsSL "$sineLink/locales.zip" -o locales.zip
+    curl -fsSL "$sineLink/engine.zip" -o engine.zip
+    curl -fsSL "$sineLink/locales.zip" -o locales.zip
 
-  # Extract
-  unzip -oq profile.zip -d "$chromeFolder"
-  rm -f profile.zip
+    # Extract
+    unzip -oq profile.zip -d "$chromeFolder"
+    rm -f profile.zip
 
-  unzip -oq engine.zip -d "$chromeFolder"
-  rm -f engine.zip
+    unzip -oq engine.zip -d "$chromeFolder"
+    rm -f engine.zip
 
-  unzip -oq locales.zip -d "$chromeFolder"
-  rm -f locales.zip
+    unzip -oq locales.zip -d "$chromeFolder"
+    rm -f locales.zip
+  fi
 
   # Write test (permission check)
   if $installBoot; then
@@ -97,7 +102,13 @@ fi
 # Bootloader install
 # --------------------
 if $installBoot; then
-  unzip -oq program.zip -d "$browserPath"
-  rm -f program.zip
+  if $uninstall; then
+    rm -f "$browserPath/config.js"
+    rm -f "$browserPath/defaults/pref/config-prefs.js"
+  else
+    unzip -oq program.zip -d "$browserPath"
+    rm -f program.zip
+  fi
+
   rm -f "$chromeFolder/update"
 fi

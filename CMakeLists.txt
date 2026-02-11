@@ -46,7 +46,6 @@ endif()
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(CURL REQUIRED)
-find_package(minizip-ng REQUIRED)
 
 target_include_directories(sine_installer PRIVATE
     external/glad/include
@@ -63,7 +62,6 @@ target_link_libraries(sine_installer PRIVATE
     glfw
     OpenGL::GL
     CURL::libcurl
-    MINIZIP::minizip-ng
 )
 
 include_directories(src)

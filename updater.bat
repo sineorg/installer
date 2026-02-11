@@ -12,6 +12,12 @@ if "%~1"=="-s" (
     goto parsePaths
 )
 
+if "%~1"=="-u" (
+    set "uninstall=true"
+    shift
+    goto parsePaths
+)
+
 if "%~1"=="--browser" (
     set "browserPath=%~2"
     shift
@@ -73,23 +79,25 @@ if errorlevel 1 (
         rmdir /s /q "%chromeFolder%\sine-mods"
     )
 
-    curl -L "%bootloaderLink%/program.zip" -o program.zip >nul 2>&1
-    curl -L "%bootloaderLink%/profile.zip" -o profile.zip >nul 2>&1
+    if not defined uninstall (
+        curl -L "%bootloaderLink%/program.zip" -o program.zip >nul 2>&1
+        curl -L "%bootloaderLink%/profile.zip" -o profile.zip >nul 2>&1
 
-    curl -L "%sineLink%/engine.zip" -o engine.zip >nul 2>&1
-    curl -L "%sineLink%/locales.zip" -o locales.zip >nul 2>&1
+        curl -L "%sineLink%/engine.zip" -o engine.zip >nul 2>&1
+        curl -L "%sineLink%/locales.zip" -o locales.zip >nul 2>&1
 
-    powershell -NoProfile -Command ^
-        "Expand-Archive -Force 'profile.zip' '%chromeFolder%'"
-    del profile.zip >nul 2>&1
+        powershell -NoProfile -Command ^
+            "Expand-Archive -Force 'profile.zip' '%chromeFolder%'"
+        del profile.zip >nul 2>&1
 
-    powershell -NoProfile -Command ^
-        "Expand-Archive -Force 'engine.zip' '%chromeFolder%'"
-    del engine.zip >nul 2>&1
+        powershell -NoProfile -Command ^
+            "Expand-Archive -Force 'engine.zip' '%chromeFolder%'"
+        del engine.zip >nul 2>&1
 
-    powershell -NoProfile -Command ^
-        "Expand-Archive -Force 'locales.zip' '%chromeFolder%'"
-    del locales.zip >nul 2>&1
+        powershell -NoProfile -Command ^
+            "Expand-Archive -Force 'locales.zip' '%chromeFolder%'"
+        del locales.zip >nul 2>&1
+    )
 
     if "%installBoot%"=="true" (
         set "batchPath=%~dp0updater.bat"
@@ -108,9 +116,14 @@ if errorlevel 1 (
 if not defined installBoot set "installBoot=true"
 
 if "%installBoot%"=="true" (
-    powershell -NoProfile -Command ^
-        "Expand-Archive -Force 'program.zip' '%browserPath%'"
-    del program.zip
+    if "%uninstall%"=="true" (
+        del "%browserPath%\config.js"
+        del "%browserPath%\defaults\pref\config-prefs.js"
+    ) else (
+        powershell -NoProfile -Command ^
+            "Expand-Archive -Force 'program.zip' '%browserPath%'"
+        del program.zip
+    )
 
     if exist "%chromeFolder%\update" (
         del "%chromeFolder%\update"
