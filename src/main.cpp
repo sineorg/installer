@@ -623,7 +623,7 @@ void installSine(
         if (!isProcessRunning(updaterName))
         {
             installStep = steps.size() - 1;
-            std::remove(filePath);
+            std::remove(filePath.c_str());
         }
 
         if (installStep < steps.size() - 2)
