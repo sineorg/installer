@@ -88,7 +88,16 @@ if [[ "$(id -u)" -ne 0 ]]; then
   # Write test (permission check)
   if $installBoot; then
     if ! touch "$browserPath/.__writetest" 2>/dev/null; then
-      pkexec "$0" "${ORIGINAL_ARGS[@]}"
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+        cmd="$0"
+        for arg in "${ORIGINAL_ARGS[@]}"; do
+          cmd+=" $(printf '%q' "$arg")"
+        done
+
+        osascript -e "do shell script $(printf '%q' "$cmd") with administrator privileges"
+      else
+        pkexec "$0" "${ORIGINAL_ARGS[@]}"
+      fi
       exit
     else
       rm -f "$browserPath/.__writetest"
