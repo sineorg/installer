@@ -424,6 +424,16 @@ void removeDir(std::string path)
     }
 }
 
+#ifdef _WIN32
+std::wstring s2ws(const std::string& str) {
+    if (str.empty()) return L"";
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), nullptr, 0);
+    std::wstring wstr(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), &wstr[0], size_needed);
+    return wstr;
+}
+#endif
+
 bool launchProcess(
     const std::string& targetPath,
     const std::string& browserPath,
@@ -620,7 +630,7 @@ void installSine(
         }
     }
 
-    renderFooter(mediumFont, uiScale, io.DisplaySize, (!adminProcess && !shouldTryAdmin) || steps.size() != installStep + 1, adminProcess);
+    renderFooter(mediumFont, uiScale, io.DisplaySize, steps.size() != installStep + 1);
 }
 
 int main(int argc, char* argv[])
