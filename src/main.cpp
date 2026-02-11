@@ -538,10 +538,9 @@ void installSine(
 
     const std::string updaterName = std::string("updater.") + (getOS() == "win32" ? "bat" : "sh");
     const std::string filePath = getDownloadsFolder() + updaterName;
-    downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
-    launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
 
     std::vector<const char*> steps;
+    steps.push_back("Launching manager...");
     if (shouldUninstall)
     {
         steps.insert(steps.end(), {
@@ -608,6 +607,11 @@ void installSine(
                 size_t pos = profilePath.find("Application Support");
                 removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
             }
+        }
+        else if (steps[installStep] == "Launching manager...")
+        {
+            downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
+            launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
         }
         else if (steps[installStep] == "Finished.")
         {
