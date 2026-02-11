@@ -444,13 +444,14 @@ bool launchProcess(
 )
 {
 #ifdef _WIN32
-    std::string parameters = (shouldSaveData ? "-s " : "")
-        + (shouldUninstall ? "-u " : "")
-        + "--browser \"" + browserPath + "\" "
-        + "--profile \"" + profilePath + "\" "
-        + (reinstallBoot ? "" : "--no-boot ")
-        + "--bootloader \"" + bootVersion + "\" "
-        + "--version \"" + sineVersion + "\"";
+    std::string parameters =
+        std::string(shouldSaveData ? "-s " : "") +
+        (shouldUninstall ? "-u " : "") +
+        "--browser \"" + browserPath + "\" " +
+        "--profile \"" + profilePath + "\" " +
+        (reinstallBoot ? "" : "--no-boot ") +
+        "--bootloader \"" + bootVersion + "\" " +
+        "--version \"" + sineVersion + "\"";
 
     std::wstring targetW = s2ws(targetPath);
     std::wstring paramsW = s2ws(parameters);
@@ -535,7 +536,7 @@ void installSine(
         std::filesystem::create_directory(std::filesystem::path(profilePath) / "chrome");
     }
 
-    const std::string updaterName = "updater." + (getOS() == "win32" ? "exe" : "sh");
+    const std::string updaterName = std::string("updater.") + (getOS() == "win32" ? "exe" : "sh");
     const std::string filePath = getDownloadsFolder() + updaterName;
     downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
     launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
