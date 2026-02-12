@@ -478,8 +478,6 @@ ProcessHandle launchProcess(
     const std::string& targetPath,
     const std::string& browserPath,
     const std::string& profilePath,
-    const std::string& bootVersion,
-    const std::string& sineVersion,
     bool shouldSaveData,
     bool shouldUninstall,
     bool reinstallBoot
