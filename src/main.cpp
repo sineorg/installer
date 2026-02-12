@@ -185,7 +185,7 @@ std::string getBrowserLocation(int browserIndex, int versionIndex)
         {
             if (path.contains("/snap/"))
             {
-                return "/root/snap/firefox";
+                return "/etc/firefox";
             }
             return path;
         }
