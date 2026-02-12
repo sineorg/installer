@@ -54,6 +54,7 @@ int WINAPI WinMain(
 #include <pwd.h>
 #include <limits.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include <sys/file.h>
 #endif
 
@@ -79,6 +80,44 @@ enum class State
 };
 
 State state = State::START;
+
+struct ProcessHandle
+{
+#ifdef _WIN32
+    HANDLE handle = nullptr;
+#else
+    pid_t pid = -1;
+#endif
+
+    bool valid() const
+    {
+#ifdef _WIN32
+        return handle != nullptr;
+#else
+        return pid > 0;
+#endif
+    }
+
+    // Wait for process to finish (blocking)
+    void wait()
+    {
+#ifdef _WIN32
+        if (handle)
+        {
+            WaitForSingleObject(handle, INFINITE);
+            CloseHandle(handle);
+            handle = nullptr;
+        }
+#else
+        if (pid > 0)
+        {
+            int status;
+            waitpid(pid, &status, 0);
+            pid = -1;
+        }
+#endif
+    }
+};
 
 void nextState() {
     int stateInt = static_cast<int>(state);
@@ -434,18 +473,22 @@ std::wstring s2ws(const std::string& str) {
 }
 #endif
 
-bool launchProcess(
+
+ProcessHandle launchProcess(
     const std::string& targetPath,
     const std::string& browserPath,
     const std::string& profilePath,
+    const std::string& bootVersion,
+    const std::string& sineVersion,
     bool shouldSaveData,
     bool shouldUninstall,
     bool reinstallBoot
 )
 {
+    ProcessHandle ph;
+
 #ifdef _WIN32
-    std::string command =
-        "cmd /k call \"" + targetPath + "\" " + 
+    std::string args =
         (shouldSaveData ? "-s " : "") +
         (shouldUninstall ? "-u " : "") +
         "--browser \"" + browserPath + "\" " +
@@ -454,23 +497,31 @@ bool launchProcess(
         "--bootloader \"" + bootVersion + "\" " +
         "--version \"" + sineVersion + "\"";
 
-    int result = system(command.c_str());
-    if (result != 0)
+    STARTUPINFOA si = {};
+    PROCESS_INFORMATION pi = {};
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+
+    if (CreateProcessA(
+            targetPath.c_str(),
+            args.data(),
+            nullptr, nullptr, FALSE,
+            CREATE_NO_WINDOW,
+            nullptr, nullptr,
+            &si, &pi
+        ))
     {
-        std::cerr << "Updater failed with code: " << result << "\n";
-        return false;
+        CloseHandle(pi.hThread);
+        ph.handle = pi.hProcess;
     }
-    return true;
-
-#elif defined(__linux__) || defined(__APPLE__)
-
+#else
     pid_t pid = fork();
     if (pid < 0)
-        return false;
+        return ph;
 
     if (pid == 0)
     {
-        // Child process
         std::vector<std::string> args;
         args.push_back(targetPath);
 
@@ -492,21 +543,22 @@ bool launchProcess(
         args.push_back("--version");
         args.push_back(sineVersion);
 
-        // Convert to char* array for execv
         std::vector<char*> argv;
         for (auto& s : args)
             argv.push_back(s.data());
-
         argv.push_back(nullptr);
 
+        freopen("/dev/null", "w", stdout);
+        freopen("/dev/null", "w", stderr);
+
         execv(targetPath.c_str(), argv.data());
-        _exit(1); // If exec fails
+        _exit(1);
     }
 
-    // Parent returns immediately (non-blocking)
-    return true;
-
+    ph.pid = pid;
 #endif
+
+    return ph;
 }
 
 void installSine(
@@ -515,7 +567,7 @@ void installSine(
     std::string& profilePath, bool reinstallBoot,
     std::string& browserPathStr, int selectedBrowser,
     int& installStep, bool shouldSaveData,
-    float uiScale, ImGuiIO& io
+    float uiScale, ImGuiIO& io, ProcessHandle& processHandle
 )
 {
     renderHeader(titleFont, timeDiff);
@@ -600,7 +652,7 @@ void installSine(
         else if (steps[installStep - 1] == "Launching manager...")
         {
             downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
-            launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
+            processHandle = launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
         }
         else if (steps[installStep] == "Finished.")
         {
@@ -618,6 +670,7 @@ void installSine(
             installStep += 1;
             if (installStep == steps.size() - 1)
             {
+                processHandle.wait();
                 std::remove(filePath.c_str());
             }
         }
@@ -643,6 +696,7 @@ int main(int argc, char* argv[])
     bool shouldUninstall = false;
     int shouldNotify = 0;
     int installStep = 0;
+    ProcessHandle processHandle;
 
     if (!glfwInit()) return -1;
 
@@ -1001,7 +1055,7 @@ int main(int argc, char* argv[])
                 profilePath, reinstallBoot,
                 browserPathStr, selectedBrowser,
                 installStep, shouldSaveData,
-                uiScale, io
+                uiScale, io, processHandle
             );
         }
         else if (state == State::LAST)
