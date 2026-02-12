@@ -501,13 +501,13 @@ ProcessHandle launchProcess(
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_HIDE;
+    si.wShowWindow = SW_SHOW;
 
     if (CreateProcessA(
             nullptr,
             cmdLine.data(),
             nullptr, nullptr, FALSE,
-            CREATE_NO_WINDOW,
+            0,
             nullptr, nullptr,
             &si, &pi
         ))
