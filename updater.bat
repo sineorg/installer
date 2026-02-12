@@ -57,6 +57,8 @@ goto parsePaths
 
 :doneParsing
 
+if not defined installBoot set "installBoot=true"
+
 set "bootloaderLink=https://github.com/sineorg/bootloader/releases/download/v%bootloaderVersion%"
 set "sineLink=https://github.com/CosmoCreeper/Sine/releases/download/v%sineVersion%"
 
@@ -115,8 +117,6 @@ if errorlevel 1 (
     )
 )
 
-if not defined installBoot set "installBoot=true"
-
 if "%installBoot%"=="true" (
     if "%uninstall%"=="true" (
         del "%browserPath%\config.js"
@@ -131,4 +131,5 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
