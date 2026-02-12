@@ -3,6 +3,8 @@ setlocal enabledelayedexpansion
 
 cd /d "%~dp0"
 
+pause
+
 :parsePaths
 if "%~1"=="" goto doneParsing
 
@@ -56,6 +58,8 @@ shift
 goto parsePaths
 
 :doneParsing
+
+pause
 
 if not defined installBoot set "installBoot=true"
 
@@ -131,5 +135,6 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
 
