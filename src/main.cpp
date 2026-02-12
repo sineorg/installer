@@ -495,6 +495,8 @@ ProcessHandle launchProcess(
     args += "--bootloader \"" + bootVersion + "\" ";
     args += "--version \"" + sineVersion + "\"";
 
+    std::string cmdLine = "\"" + targetPath + "\" " + args;
+
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
@@ -502,8 +504,8 @@ ProcessHandle launchProcess(
     si.wShowWindow = SW_SHOW;
 
     if (CreateProcessA(
-            targetPath.c_str(),
-            args.data(),
+            nullptr,
+            cmdLine.data(),
             nullptr, nullptr, FALSE,
             0,
             nullptr, nullptr,
