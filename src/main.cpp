@@ -597,7 +597,7 @@ void installSine(
                 removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
             }
         }
-        else if (steps[installStep] == "Launching manager...")
+        else if (steps[installStep - 1] == "Launching manager...")
         {
             downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
             launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
@@ -611,17 +611,15 @@ void installSine(
             ImGui::PopFont();
         }
 
-        std::this_thread::sleep_for(500ms);
+        std::this_thread::sleep_for(750ms);
 
-        if (!isProcessRunning(updaterName))
-        {
-            installStep = steps.size() - 1;
-            std::remove(filePath.c_str());
-        }
-
-        if (installStep < steps.size() - 2)
+        if (installStep < steps.size() - 1)
         {
             installStep += 1;
+            if (installStep == steps.size() - 1)
+            {
+                std::remove(filePath.c_str());
+            }
         }
     }
 
