@@ -486,14 +486,14 @@ ProcessHandle launchProcess(
     ProcessHandle ph;
 
 #ifdef _WIN32
-    std::string args =
-        (shouldSaveData ? "-s " : "") +
-        (shouldUninstall ? "-u " : "") +
-        (std::string("--browser \"") + browserPath + "\" ") +
-        (std::string("--profile \"") + profilePath + "\" ") +
-        (reinstallBoot ? "" : "--no-boot ") +
-        (std::string("--bootloader \"") + bootVersion + "\" ") +
-        (std::string("--version \"") + sineVersion + "\"");
+    std::string args;
+    if (shouldSaveData) args += "-s ";
+    if (shouldUninstall) args += "-u ";
+    args += "--browser \"" + browserPath + "\" ";
+    args += "--profile \"" + profilePath + "\" ";
+    if (!reinstallBoot) args += "--no-boot ";
+    args += "--bootloader \"" + bootVersion + "\" ";
+    args += "--version \"" + sineVersion + "\"";
 
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
