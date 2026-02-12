@@ -54,6 +54,19 @@ done
 bootloaderLink="https://github.com/sineorg/bootloader/releases/download/v$bootloaderVersion"
 sineLink="https://github.com/CosmoCreeper/Sine/releases/download/v$sineVersion"
 
+download_file() {
+    local url=$1
+    local dest=$2
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$url" -o "$dest"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -q -O "$dest" "$url"
+    else
+        echo "Error: Neither curl nor wget found. Please install one."
+        exit 1
+    fi
+}
+
 # --------------------
 # Admin / root check
 # --------------------
@@ -69,20 +82,20 @@ if [[ "$(id -u)" -ne 0 ]]; then
 
   if ! $uninstall; then
     # Downloads
-    curl -fsSL "$bootloaderLink/program.zip" -o program.zip
-    curl -fsSL "$bootloaderLink/profile.zip" -o profile.zip
+    download_file "$bootloaderLink/program.zip" "program.zip"
+    download_file "$bootloaderLink/profile.zip" "profile.zip"
 
-    curl -fsSL "$sineLink/engine.zip" -o engine.zip
-    curl -fsSL "$sineLink/locales.zip" -o locales.zip
+    download_file "$sineLink/engine.zip" "engine.zip"
+    download_file "$sineLink/locales.zip" "locales.zip"
 
     # Extract
-    unzip -oq profile.zip -d "$chromeFolder"
+    tar -xf profile.zip -C "$chromeFolder"
     rm -f profile.zip
 
-    unzip -oq engine.zip -d "$chromeFolder"
+    tar -xf engine.zip -C "$chromeFolder"
     rm -f engine.zip
 
-    unzip -oq locales.zip -d "$chromeFolder"
+    tar -xf locales.zip -C "$chromeFolder"
     rm -f locales.zip
   fi
 
@@ -116,7 +129,7 @@ if $installBoot; then
     rm -f "$browserPath/config.js"
     rm -f "$browserPath/defaults/pref/config-prefs.js"
   else
-    unzip -oq program.zip -d "$browserPath"
+    tar -xf program.zip -C "$browserPath"
     rm -f program.zip
   fi
 
