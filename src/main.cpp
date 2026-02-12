@@ -674,7 +674,7 @@ void installSine(
             ImGui::PopFont();
         }
 
-        std::this_thread::sleep_for(750ms);
+        std::this_thread::sleep_for(400ms);
 
         if (installStep < steps.size() - 1)
         {
