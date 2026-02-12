@@ -117,20 +117,28 @@ if errorlevel 1 (
     )
 )
 
+pause
+
 if "%installBoot%"=="true" (
     if "%uninstall%"=="true" (
+        pause
         del "%browserPath%\config.js"
         del "%browserPath%\defaults\pref\config-prefs.js"
     ) else (
+        pause
         powershell -NoProfile -Command ^
             "Expand-Archive -Force 'program.zip' '%browserPath%'"
+        pause
         del program.zip
     )
+
+    pause
 
     if exist "%chromeFolder%\update" (
         del "%chromeFolder%\update"
     )
 )
+
 
 
 
