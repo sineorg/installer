@@ -519,42 +519,40 @@ ProcessHandle launchProcess(
     pid_t pid = fork();
     if (pid < 0)
         return ph;
-
+    
     if (pid == 0)
     {
         std::vector<std::string> args;
-        args.push_back(targetPath);
-
-        if (shouldSaveData)  args.push_back("-s");
-        if (shouldUninstall) args.push_back("-u");
-
-        args.push_back("--browser");
-        args.push_back(browserPath);
-
-        args.push_back("--profile");
-        args.push_back(profilePath);
-
-        if (!reinstallBoot)
-            args.push_back("--no-boot");
-
-        args.push_back("--bootloader");
-        args.push_back(bootVersion);
-
-        args.push_back("--version");
-        args.push_back(sineVersion);
-
+        args.push_back("gnome-terminal");
+        args.push_back("--");
+        args.push_back("bash");
+        args.push_back("-c");
+    
+        std::string cmd = targetPath;
+        if (shouldSaveData) cmd += " -s";
+        if (shouldUninstall) cmd += " -u";
+        cmd += " --browser " + browserPath;
+        cmd += " --profile " + profilePath;
+        if (!reinstallBoot) cmd += " --no-boot";
+        cmd += " --bootloader " + bootVersion;
+        cmd += " --version " + sineVersion;
+    
+        cmd += "; exec bash"; // keep terminal open
+    
+        args.push_back(cmd);
+    
+        // Convert args to char* array
         std::vector<char*> argv;
         for (auto& s : args)
-            argv.push_back(s.data());
+            argv.push_back(const_cast<char*>(s.c_str()));
         argv.push_back(nullptr);
-
-        freopen("/tmp/mylog.txt", "w", stdout);
-        freopen("/tmp/mylog.txt", "w", stderr);
-
-        execv(targetPath.c_str(), argv.data());
+    
+        // Execute terminal
+        execvp("gnome-terminal", argv.data());
+        perror("execvp failed"); // log error if exec fails
         _exit(1);
     }
-
+    
     ph.pid = pid;
 #endif
 
