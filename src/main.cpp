@@ -494,26 +494,23 @@ ProcessHandle launchProcess(
     if (!reinstallBoot) args += "--no-boot ";
     args += "--bootloader \"" + bootVersion + "\" ";
     args += "--version \"" + sineVersion + "\"";
-
-    std::string cmdLine = "cmd.exe /k \"" + targetPath + " " + args + "\"";
-
+    
+    std::string cmdLine = "\"" + targetPath + "\" " + args;
+    
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOW;
-
+    
     if (CreateProcessA(
             nullptr,
             cmdLine.data(),
             nullptr, nullptr, FALSE,
             0,
             nullptr, nullptr,
-            &si, &pi
-        ))
+            &si, &pi))
     {
         CloseHandle(pi.hThread);
-        ph.handle = pi.hProcess;
+        CloseHandle(pi.hProcess);
     }
 #else
     // Make script executable
