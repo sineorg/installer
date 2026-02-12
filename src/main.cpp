@@ -520,14 +520,15 @@ ProcessHandle launchProcess(
     if (pid < 0)
         return ph;
     
-    if (pid == 0)
+    if (pid == 0) // child
     {
         std::vector<std::string> args;
-        args.push_back("gnome-terminal");
+        args.push_back("gnome-terminal");  // or "xterm" if gnome-terminal is missing
         args.push_back("--");
         args.push_back("bash");
         args.push_back("-c");
     
+        // Build the command string
         std::string cmd = targetPath;
         if (shouldSaveData) cmd += " -s";
         if (shouldUninstall) cmd += " -u";
@@ -537,22 +538,23 @@ ProcessHandle launchProcess(
         cmd += " --bootloader " + bootVersion;
         cmd += " --version " + sineVersion;
     
-        cmd += "; exec bash"; // keep terminal open
+        // Keep terminal alive forever
+        cmd += "; while true; do sleep 60; done";
     
         args.push_back(cmd);
     
-        // Convert args to char* array
+        // Convert args to char* array for execvp
         std::vector<char*> argv;
         for (auto& s : args)
             argv.push_back(const_cast<char*>(s.c_str()));
         argv.push_back(nullptr);
     
-        // Execute terminal
         execvp("gnome-terminal", argv.data());
-        perror("execvp failed"); // log error if exec fails
+        perror("execvp failed"); // log if terminal fails to launch
         _exit(1);
     }
     
+    // parent process
     ph.pid = pid;
 #endif
 
