@@ -489,11 +489,11 @@ ProcessHandle launchProcess(
     std::string args =
         (shouldSaveData ? "-s " : "") +
         (shouldUninstall ? "-u " : "") +
-        "--browser \"" + browserPath + "\" " +
-        "--profile \"" + profilePath + "\" " +
+        (std::string("--browser \"") + browserPath + "\" ") +
+        (std::string("--profile \"") + profilePath + "\" ") +
         (reinstallBoot ? "" : "--no-boot ") +
-        "--bootloader \"" + bootVersion + "\" " +
-        "--version \"" + sineVersion + "\"";
+        (std::string("--bootloader \"") + bootVersion + "\" ") +
+        (std::string("--version \"") + sineVersion + "\"");
 
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
