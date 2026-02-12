@@ -499,7 +499,7 @@ ProcessHandle launchProcess(
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_HIDE;
+    si.wShowWindow = SW_SHOW;
 
     if (CreateProcessA(
             targetPath.c_str(),
