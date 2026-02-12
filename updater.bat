@@ -109,7 +109,9 @@ if errorlevel 1 (
             del "%browserPath%\.__writetest" >nul 2>&1
         )
     ) else (
-        del "%chromeFolder%\update"
+        if exist "%chromeFolder%\update" (
+            del "%chromeFolder%\update"
+        )
     )
 )
 
@@ -129,3 +131,4 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
