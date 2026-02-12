@@ -89,13 +89,13 @@ if [[ "$(id -u)" -ne 0 ]]; then
     download_file "$sineLink/locales.zip" "locales.zip"
 
     # Extract
-    tar -xf profile.zip -C "$chromeFolder"
+    unzip -oq profile.zip -d "$chromeFolder"
     rm -f profile.zip
 
-    tar -xf engine.zip -C "$chromeFolder"
+    unzip -oq engine.zip -d "$chromeFolder"
     rm -f engine.zip
 
-    tar -xf locales.zip -C "$chromeFolder"
+    unzip -oq locales.zip -d "$chromeFolder"
     rm -f locales.zip
   fi
 
@@ -129,7 +129,7 @@ if $installBoot; then
     rm -f "$browserPath/config.js"
     rm -f "$browserPath/defaults/pref/config-prefs.js"
   else
-    tar -xf program.zip -C "$browserPath"
+    unzip -oq program.zip -d "$browserPath"
     rm -f program.zip
   fi
 
