@@ -444,7 +444,10 @@ bool launchProcess(
 )
 {
 #ifdef _WIN32
+    std::wstring targetW = s2ws(targetPath);
+    
     std::string parameters =
+        std::string("/k call \"") + targetW + "\""
         std::string(shouldSaveData ? "-s " : "") +
         (shouldUninstall ? "-u " : "") +
         "--browser \"" + browserPath + "\" " +
@@ -452,15 +455,13 @@ bool launchProcess(
         (reinstallBoot ? "" : "--no-boot ") +
         "--bootloader \"" + bootVersion + "\" " +
         "--version \"" + sineVersion + "\"";
-
-    std::wstring targetW = s2ws(targetPath);
     std::wstring paramsW = s2ws(parameters);
 
     SHELLEXECUTEINFOW sei{};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
     sei.lpVerb = nullptr; // normal launch
-    sei.lpFile = targetW.c_str();
+    sei.lpFile = L"cmd.exe";
     sei.lpParameters = paramsW.c_str();
     sei.nShow = SW_SHOWDEFAULT;
 
