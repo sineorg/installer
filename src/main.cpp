@@ -447,7 +447,7 @@ bool launchProcess(
     std::wstring targetW = s2ws(targetPath);
     
     std::string parameters =
-        std::string("/k call \"") + targetPath + "\"" + 
+        std::string("/k call \"") + targetPath + "\" " + 
         std::string(shouldSaveData ? "-s " : "") +
         (shouldUninstall ? "-u " : "") +
         "--browser \"" + browserPath + "\" " +
