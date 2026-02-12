@@ -61,16 +61,24 @@ goto parsePaths
 
 :doneParsing
 
+pause
+
 if not defined installBoot set "installBoot=true"
+
+pause
 
 set "bootloaderLink=https://github.com/sineorg/bootloader/releases/download/v%bootloaderVersion%"
 set "sineLink=https://github.com/CosmoCreeper/Sine/releases/download/v%sineVersion%"
+
+pause
 
 net session >nul 2>&1
 if errorlevel 1 (
     echo Welcome to Sine's official updater!
     echo Updating to v%sineVersion%...
     echo Do not cancel the installer. Doing so will crash your Sine installation.
+
+    pause
 
     if exist "%chromeFolder%\JS" (
         rmdir /s /q "%chromeFolder%\JS"
@@ -84,6 +92,8 @@ if errorlevel 1 (
     if not defined saveData if exist "%chromeFolder%\sine-mods" (
         rmdir /s /q "%chromeFolder%\sine-mods"
     )
+
+    pause
 
     if not defined uninstall (
         curl -L "%bootloaderLink%/program.zip" -o program.zip >nul 2>&1
@@ -146,6 +156,7 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
 
 
