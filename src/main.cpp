@@ -444,34 +444,22 @@ bool launchProcess(
 )
 {
 #ifdef _WIN32
-    std::wstring targetW = s2ws(targetPath);
-    
-    std::string parameters =
-        std::string("/k call \"") + targetPath + "\" " + 
-        std::string(shouldSaveData ? "-s " : "") +
+    std::string command =
+        "cmd /k call \"" + targetPath + "\" " + 
+        (shouldSaveData ? "-s " : "") +
         (shouldUninstall ? "-u " : "") +
         "--browser \"" + browserPath + "\" " +
         "--profile \"" + profilePath + "\" " +
         (reinstallBoot ? "" : "--no-boot ") +
         "--bootloader \"" + bootVersion + "\" " +
         "--version \"" + sineVersion + "\"";
-    std::wstring paramsW = s2ws(parameters);
 
-    SHELLEXECUTEINFOW sei{};
-    sei.cbSize = sizeof(sei);
-    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    sei.lpVerb = nullptr; // normal launch
-    sei.lpFile = L"cmd.exe";
-    sei.lpParameters = paramsW.c_str();
-    sei.nShow = SW_SHOWDEFAULT;
-
-    if (!ShellExecuteExW(&sei))
+    int result = system(command.c_str());
+    if (result != 0)
     {
-        std::cerr << "Failed to launch process.\n";
+        std::cerr << "Updater failed with code: " << result << "\n";
         return false;
     }
-
-    CloseHandle(sei.hProcess);
     return true;
 
 #elif defined(__linux__) || defined(__APPLE__)
