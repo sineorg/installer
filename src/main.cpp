@@ -516,6 +516,17 @@ ProcessHandle launchProcess(
         ph.handle = pi.hProcess;
     }
 #else
+    // Make script executable BEFORE fork
+    struct stat st;
+    if (stat(targetPath.c_str(), &st) == 0) {
+        // Add user execute permission
+        if (chmod(targetPath.c_str(), st.st_mode | S_IXUSR) != 0) {
+            perror("chmod failed");
+        }
+    } else {
+        perror("stat failed");
+    }
+    
     pid_t pid = fork();
     if (pid < 0)
         return ph;
@@ -523,38 +534,35 @@ ProcessHandle launchProcess(
     if (pid == 0) // child
     {
         std::vector<std::string> args;
-        args.push_back("gnome-terminal");  // or "xterm" if gnome-terminal is missing
+        args.push_back("gnome-terminal");
         args.push_back("--");
         args.push_back("bash");
         args.push_back("-c");
     
-        // Build the command string
-        std::string cmd = targetPath;
+        std::string cmd = "\"" + targetPath + "\"";
+    
         if (shouldSaveData) cmd += " -s";
         if (shouldUninstall) cmd += " -u";
-        cmd += " --browser " + browserPath;
-        cmd += " --profile " + profilePath;
+        cmd += " --browser \"" + browserPath + "\"";
+        cmd += " --profile \"" + profilePath + "\"";
         if (!reinstallBoot) cmd += " --no-boot";
-        cmd += " --bootloader " + bootVersion;
-        cmd += " --version " + sineVersion;
+        cmd += " --bootloader \"" + bootVersion + "\"";
+        cmd += " --version \"" + sineVersion + "\"";
     
-        // Keep terminal alive forever
         cmd += "; while true; do sleep 60; done";
     
         args.push_back(cmd);
     
-        // Convert args to char* array for execvp
         std::vector<char*> argv;
         for (auto& s : args)
             argv.push_back(const_cast<char*>(s.c_str()));
         argv.push_back(nullptr);
     
         execvp("gnome-terminal", argv.data());
-        perror("execvp failed"); // log if terminal fails to launch
+        perror("execvp failed");
         _exit(1);
     }
     
-    // parent process
     ph.pid = pid;
 #endif
 
