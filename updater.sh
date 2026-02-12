@@ -12,6 +12,7 @@ browserPath=""
 chromeFolder=""
 installBoot=true
 saveData=false
+uninstall=false
 
 ORIGINAL_ARGS=("$@")
 
