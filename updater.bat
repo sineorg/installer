@@ -1,7 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
 
+pause
+
 cd /d "%~dp0"
+
+pause
 
 :parsePaths
 if "%~1"=="" goto doneParsing
@@ -138,6 +142,7 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
 
 
