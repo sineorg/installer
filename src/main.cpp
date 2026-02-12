@@ -548,8 +548,8 @@ ProcessHandle launchProcess(
             argv.push_back(s.data());
         argv.push_back(nullptr);
 
-        freopen("/dev/null", "w", stdout);
-        freopen("/dev/null", "w", stderr);
+        freopen("/tmp/mylog.txt", "w", stdout);
+        freopen("/tmp/mylog.txt", "w", stderr);
 
         execv(targetPath.c_str(), argv.data());
         _exit(1);
