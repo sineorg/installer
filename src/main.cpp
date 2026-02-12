@@ -516,10 +516,9 @@ ProcessHandle launchProcess(
         ph.handle = pi.hProcess;
     }
 #else
-    // Make script executable BEFORE fork
+    // Make script executable
     struct stat st;
     if (stat(targetPath.c_str(), &st) == 0) {
-        // Add user execute permission
         if (chmod(targetPath.c_str(), st.st_mode | S_IXUSR) != 0) {
             perror("chmod failed");
         }
@@ -530,36 +529,40 @@ ProcessHandle launchProcess(
     pid_t pid = fork();
     if (pid < 0)
         return ph;
-    
-    if (pid == 0) // child
+
+    // Launch script
+    if (pid == 0)
     {
         std::vector<std::string> args;
-        args.push_back("gnome-terminal");
-        args.push_back("--");
-        args.push_back("bash");
-        args.push_back("-c");
-    
-        std::string cmd = "\"" + targetPath + "\"";
-    
-        if (shouldSaveData) cmd += " -s";
-        if (shouldUninstall) cmd += " -u";
-        cmd += " --browser \"" + browserPath + "\"";
-        cmd += " --profile \"" + profilePath + "\"";
-        if (!reinstallBoot) cmd += " --no-boot";
-        cmd += " --bootloader \"" + bootVersion + "\"";
-        cmd += " --version \"" + sineVersion + "\"";
-    
-        cmd += "; while true; do sleep 60; done";
-    
-        args.push_back(cmd);
-    
+        args.push_back(targetPath);
+
+        if (shouldSaveData)  args.push_back("-s");
+        if (shouldUninstall) args.push_back("-u");
+
+        args.push_back("--browser");
+        args.push_back(browserPath);
+
+        args.push_back("--profile");
+        args.push_back(profilePath);
+
+        if (!reinstallBoot)
+            args.push_back("--no-boot");
+
+        args.push_back("--bootloader");
+        args.push_back(bootVersion);
+
+        args.push_back("--version");
+        args.push_back(sineVersion);
+
         std::vector<char*> argv;
         for (auto& s : args)
-            argv.push_back(const_cast<char*>(s.c_str()));
+            argv.push_back(s.data());
         argv.push_back(nullptr);
-    
-        execvp("gnome-terminal", argv.data());
-        perror("execvp failed");
+
+        freopen("/tmp/mylog.txt", "w", stdout);
+        freopen("/tmp/mylog.txt", "w", stderr);
+
+        execv(targetPath.c_str(), argv.data());
         _exit(1);
     }
     
