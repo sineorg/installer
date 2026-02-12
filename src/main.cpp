@@ -495,7 +495,7 @@ ProcessHandle launchProcess(
     args += "--bootloader \"" + bootVersion + "\" ";
     args += "--version \"" + sineVersion + "\"";
 
-    std::string cmdLine = "\"" + targetPath + "\" " + args;
+    std::string cmdLine = "cmd.exe /k \"" + targetPath + " " + args + "\"";
 
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
