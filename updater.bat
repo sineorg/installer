@@ -4,7 +4,6 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 set "scriptPath=%~f0"
-set "args="
 
 :parsePaths
 if "%~1"=="" goto doneParsing
@@ -146,16 +145,16 @@ if "%installBoot%"=="true" (
 
 :addArg
 if "%~2"=="" (
-    if defined psArgs (
-        set "psArgs=!psArgs!,\"%~1\""
+    if defined args (
+        set "args=!args!,"%~1""
     ) else (
-        set "psArgs=\"%~1\""
+        set "args="%~1""
     )
 ) else (
-    if defined psArgs (
-        set "psArgs=!psArgs!,\"%~1\",\"%~2\""
+    if defined args (
+        set "args=!args!,"%~1","%~2""
     ) else (
-        set "psArgs=\"%~1\",\"%~2\""
+        set "args="%~1","%~2""
     )
 )
 exit /b
