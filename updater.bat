@@ -4,28 +4,28 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 set "scriptPath=%~f0"
-set "psArgs="
+set "args="
 
 :parsePaths
 if "%~1"=="" goto doneParsing
 
 if "%~1"=="-s" (
     set "saveData=true"
-    set "psArgs=!psArgs! -s"
+    set "args=!args! -s"
     shift
     goto parsePaths
 )
 
 if "%~1"=="-u" (
     set "uninstall=true"
-    set "psArgs=!psArgs! -u"
+    set "args=!args! -u"
     shift
     goto parsePaths
 )
 
 if "%~1"=="--browser" (
     set "browserPath=%~2"
-    set "psArgs=!psArgs! --browser '%~2'"
+    set "args=!args! --browser '%~2'"
     shift
     shift
     goto parsePaths
@@ -33,7 +33,7 @@ if "%~1"=="--browser" (
 
 if "%~1"=="--profile" (
     set "chromeFolder=%~2\chrome"
-    set "psArgs=!psArgs! --profile '%~2'"
+    set "args=!args! --profile '%~2'"
     shift
     shift
     goto parsePaths
@@ -41,14 +41,14 @@ if "%~1"=="--profile" (
 
 if "%~1"=="--no-boot" (
     set "installBoot=false"
-    set "psArgs=!psArgs! --no-boot"
+    set "args=!args! --no-boot"
     shift
     goto parsePaths
 )
 
 if "%~1"=="--bootloader" (
     set "bootloaderVersion=%~2"
-    set "psArgs=!psArgs! --bootloader '%~2'"
+    set "args=!args! --bootloader '%~2'"
     shift
     shift
     goto parsePaths
@@ -56,7 +56,7 @@ if "%~1"=="--bootloader" (
 
 if "%~1"=="--version" (
     set "sineVersion=%~2"
-    set "psArgs=!psArgs! --version '%~2'"
+    set "args=!args! --version '%~2'"
     shift
     shift
     goto parsePaths
@@ -114,7 +114,8 @@ if errorlevel 1 (
     if "%installBoot%"=="true" (
         echo. > "%browserPath%\.__writetest" 2>nul
         if not exist "%browserPath%\.__writetest" (
-            powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%scriptPath%' -ArgumentList @(!psArgs!) -Verb RunAs -Wait"
+            set "psArgs=!args: =,!"
+            powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%scriptPath%' -ArgumentList !psArgs! -Verb RunAs -Wait"
             exit /b
         ) else (
             del "%browserPath%\.__writetest" >nul 2>&1
