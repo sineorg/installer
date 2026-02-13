@@ -104,7 +104,8 @@ if errorlevel 1 (
     if "%installBoot%"=="true" (
         echo. > "%browserPath%\.__writetest" 2>nul
         if not exist "%browserPath%\.__writetest" (
-            powershell -Command "Start-Process -FilePath '%~f0' -ArgumentList @('%*') -Verb RunAs -Wait"
+            set "args=%*"
+            powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -ArgumentList '%args%' -Verb RunAs -Wait"
             pause
             exit /b
         ) else (
@@ -133,4 +134,5 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
