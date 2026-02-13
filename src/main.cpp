@@ -630,16 +630,19 @@ void installSine(
     steps.push_back("Finished.");
 
     bool isFinalStep = installStep == steps.size() - 1;
+    
+    bool browserOpen = false;
     if (!isFinalStep)
     {
-        bool browserOpen = isProcessRunning(toLowercase(browsers[selectedBrowser].first) + (getOS() == "win32" ? ".exe" : ""));
-        if (browserOpen)
-        {
-            renderStepHeader("Please close your browser before installing.", mediumFont, timeDiff);
-            ImGui::PushFont(lightFont);
-            ImGui::Text("Listening for browser to be closed...");
-            ImGui::PopFont();
-        }
+        browserOpen = isProcessRunning(toLowercase(browsers[selectedBrowser].first) + (getOS() == "win32" ? ".exe" : ""));
+    }
+
+    if (browserOpen)
+    {
+        renderStepHeader("Please close your browser before installing.", mediumFont, timeDiff);
+        ImGui::PushFont(lightFont);
+        ImGui::Text("Listening for browser to be closed...");
+        ImGui::PopFont();
     }
     else
     {
