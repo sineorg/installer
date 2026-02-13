@@ -131,6 +131,7 @@ if "%installBoot%"=="true" (
         del "%browserPath%\config.js"
         del "%browserPath%\defaults\pref\config-prefs.js"
     ) else (
+        echo %browserPath%
         powershell -NoProfile -Command ^
             "Expand-Archive -Force 'program.zip' '%browserPath%'"
         del program.zip
@@ -142,6 +143,7 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
 
 
