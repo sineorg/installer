@@ -501,9 +501,11 @@ ProcessHandle launchProcess(
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_SHOW;
     
+    std::string cmdLine = "\"" + targetPath + "\" " + args;
+    
     if (CreateProcessA(
-            targetPath.c_str(),
-            args.data(),
+            nullptr,
+            cmdLine.data(),
             nullptr, nullptr, FALSE,
             0,
             nullptr, nullptr,
