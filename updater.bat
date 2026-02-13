@@ -1,11 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-pause
-
 cd /d "%~dp0"
-
-pause
 
 :parsePaths
 if "%~1"=="" goto doneParsing
@@ -61,24 +57,16 @@ goto parsePaths
 
 :doneParsing
 
-pause
-
 if not defined installBoot set "installBoot=true"
-
-pause
 
 set "bootloaderLink=https://github.com/sineorg/bootloader/releases/download/v%bootloaderVersion%"
 set "sineLink=https://github.com/CosmoCreeper/Sine/releases/download/v%sineVersion%"
-
-pause
 
 net session >nul 2>&1
 if errorlevel 1 (
     echo Welcome to Sine's official updater!
     echo Updating to v%sineVersion%...
     echo Do not cancel the installer. Doing so will crash your Sine installation.
-
-    pause
 
     if exist "%chromeFolder%\JS" (
         rmdir /s /q "%chromeFolder%\JS"
@@ -92,8 +80,6 @@ if errorlevel 1 (
     if not defined saveData if exist "%chromeFolder%\sine-mods" (
         rmdir /s /q "%chromeFolder%\sine-mods"
     )
-
-    pause
 
     if not defined uninstall (
         curl -L "%bootloaderLink%/program.zip" -o program.zip >nul 2>&1
@@ -115,13 +101,10 @@ if errorlevel 1 (
         del locales.zip >nul 2>&1
     )
 
-    pause
     if "%installBoot%"=="true" (
         set "batchPath=%~dp0updater.bat"
         echo. > "%browserPath%\.__writetest" 2>nul
-        pause
         if not exist "%browserPath%\.__writetest" (
-            pause
             powershell -Command "Start-Process -FilePath '%batchPath%' -ArgumentList '%*' -Verb RunAs -Wait"
             pause
             exit /b
@@ -135,18 +118,13 @@ if errorlevel 1 (
     )
 )
 
-pause
-
 if "%installBoot%"=="true" (
     if "%uninstall%"=="true" (
-        pause
         del "%browserPath%\config.js"
         del "%browserPath%\defaults\pref\config-prefs.js"
     ) else (
-        pause
         powershell -NoProfile -Command ^
             "Expand-Archive -Force 'program.zip' '%browserPath%'"
-        pause
         del program.zip
     )
 
@@ -156,14 +134,3 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
-
-
-
-
-
-
-
-
-
-
-
