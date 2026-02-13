@@ -3,6 +3,8 @@ setlocal enabledelayedexpansion
 
 cd /d "%~dp0"
 
+set "scriptPath=%~f0"
+
 :parsePaths
 if "%~1"=="" goto doneParsing
 
@@ -112,8 +114,7 @@ if errorlevel 1 (
                     set "psArgs='%%~A'"
                 )
             )
-            powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -ArgumentList @(!psArgs!) -Verb RunAs -Wait"
-            pause
+            powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%scriptPath%' -ArgumentList @(!psArgs!) -Verb RunAs -Wait"
             exit /b
         ) else (
             del "%browserPath%\.__writetest" >nul 2>&1
@@ -141,6 +142,7 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
 
 
