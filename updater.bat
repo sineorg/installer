@@ -102,10 +102,9 @@ if errorlevel 1 (
     )
 
     if "%installBoot%"=="true" (
-        set "batchPath=%~dp0updater.bat"
         echo. > "%browserPath%\.__writetest" 2>nul
         if not exist "%browserPath%\.__writetest" (
-            powershell -Command "Start-Process -FilePath '%batchPath%' -ArgumentList '%*' -Verb RunAs -Wait"
+            powershell -Command "Start-Process -FilePath '%~f0' -ArgumentList @('%*') -Verb RunAs -Wait"
             pause
             exit /b
         ) else (
@@ -134,3 +133,4 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
