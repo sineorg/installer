@@ -144,17 +144,20 @@ if "%installBoot%"=="true" (
 )
 
 :addArg
-if "%~2"=="" (
+set "arg=%~1"
+set "val=%~2"
+
+if not defined val (
     if defined args (
-        set "args=!args!,"%~1""
+        set "args=!args!,"%arg%""
     ) else (
-        set "args="%~1""
+        set "args="%arg%""
     )
 ) else (
     if defined args (
-        set "args=!args!,"%~1","%~2""
+        set "args=!args!,"%arg%","%val%""
     ) else (
-        set "args="%~1","%~2""
+        set "args="%arg%","%val%""
     )
 )
 exit /b
