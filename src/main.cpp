@@ -629,13 +629,17 @@ void installSine(
     }
     steps.push_back("Finished.");
 
-    bool browserOpen = isProcessRunning(toLowercase(browsers[selectedBrowser].first) + (getOS() == "win32" ? ".exe" : ""));
-    if (browserOpen)
+    bool isFinalStep = installStep == steps.size() - 1;
+    if (!isFinalStep)
     {
-        renderStepHeader("Please close your browser before installing.", mediumFont, timeDiff);
-        ImGui::PushFont(lightFont);
-        ImGui::Text("Listening for browser to be closed...");
-        ImGui::PopFont();
+        bool browserOpen = isProcessRunning(toLowercase(browsers[selectedBrowser].first) + (getOS() == "win32" ? ".exe" : ""));
+        if (browserOpen)
+        {
+            renderStepHeader("Please close your browser before installing.", mediumFont, timeDiff);
+            ImGui::PushFont(lightFont);
+            ImGui::Text("Listening for browser to be closed...");
+            ImGui::PopFont();
+        }
     }
     else
     {
@@ -665,7 +669,7 @@ void installSine(
             downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
             processHandle = launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
         }
-        else if (steps[installStep] == "Finished.")
+        else if (isFinalStep)
         {
             ImGui::Dummy(ImVec2(0.0f, 20.0f));
             ImGui::PushFont(lightFont);
@@ -674,13 +678,9 @@ void installSine(
             ImGui::PopFont();
         }
 
-        if (steps[installStep] != "Finished.")
+        if (!isFinalStep)
         {
             std::this_thread::sleep_for(400ms);
-        }
-
-        if (installStep < steps.size() - 1)
-        {
             installStep += 1;
             if (installStep == steps.size() - 1)
             {
