@@ -495,22 +495,23 @@ ProcessHandle launchProcess(
     args += "--bootloader \"" + bootVersion + "\" ";
     args += "--version \"" + sineVersion + "\"";
     
-    std::string cmdLine = "\"" + targetPath + "\" " + args;
-    
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
     
     if (CreateProcessA(
-            nullptr,
-            cmdLine.data(),
+            targetPath.c_str(),
+            args.data(),
             nullptr, nullptr, FALSE,
-            0,
+            CREATE_NO_WINDOW,
             nullptr, nullptr,
-            &si, &pi))
+            &si, &pi
+        ))
     {
         CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+        ph.handle = pi.hProcess;
     }
 #else
     // Make script executable
