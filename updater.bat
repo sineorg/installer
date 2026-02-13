@@ -127,7 +127,7 @@ if errorlevel 1 (
 )
 
 if "%installBoot%"=="true" (
-    if "%uninstall%"=="true" (
+    if defined uninstall (
         del "%browserPath%\config.js"
         del "%browserPath%\defaults\pref\config-prefs.js"
     ) else (
@@ -142,6 +142,7 @@ if "%installBoot%"=="true" (
         del "%chromeFolder%\update"
     )
 )
+
 
 
 
