@@ -89,7 +89,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
     {"Zen", {
         {"profile", {
             {"win32", { "zen" }},
-            {"linux", { ".zen" }},
+            {"linux", { ".config/zen", ".zen" }},
             {"darwin", { "Zen" }}
         }},
         {"Beta", {
