@@ -11,21 +11,21 @@ if "%~1"=="" goto doneParsing
 
 if "%~1"=="-s" (
     set "saveData=true"
-    set "args=!args! -s"
+    call :addArg "-s"
     shift
     goto parsePaths
 )
 
 if "%~1"=="-u" (
     set "uninstall=true"
-    set "args=!args! -u"
+    call :addArg "-u"
     shift
     goto parsePaths
 )
 
 if "%~1"=="--browser" (
     set "browserPath=%~2"
-    set "args=!args! --browser '%~2'"
+    call :addArg "--browser" "%~2"
     shift
     shift
     goto parsePaths
@@ -33,7 +33,7 @@ if "%~1"=="--browser" (
 
 if "%~1"=="--profile" (
     set "chromeFolder=%~2\chrome"
-    set "args=!args! --profile '%~2'"
+    call :addArg "--profile" "%~2"
     shift
     shift
     goto parsePaths
@@ -41,14 +41,14 @@ if "%~1"=="--profile" (
 
 if "%~1"=="--no-boot" (
     set "installBoot=false"
-    set "args=!args! --no-boot"
+    call :addArg "--no-boot"
     shift
     goto parsePaths
 )
 
 if "%~1"=="--bootloader" (
     set "bootloaderVersion=%~2"
-    set "args=!args! --bootloader '%~2'"
+    call :addArg "--bootloader" "%~2"
     shift
     shift
     goto parsePaths
@@ -56,7 +56,7 @@ if "%~1"=="--bootloader" (
 
 if "%~1"=="--version" (
     set "sineVersion=%~2"
-    set "args=!args! --version '%~2'"
+    call :addArg "--version" "%~2"
     shift
     shift
     goto parsePaths
@@ -144,11 +144,18 @@ if "%installBoot%"=="true" (
     )
 )
 
-
-
-
-
-
-
-
-
+:addArg
+if "%~2"=="" (
+    if defined psArgs (
+        set "psArgs=!psArgs!,\"%~1\""
+    ) else (
+        set "psArgs=\"%~1\""
+    )
+) else (
+    if defined psArgs (
+        set "psArgs=!psArgs!,\"%~1\",\"%~2\""
+    ) else (
+        set "psArgs=\"%~1\",\"%~2\""
+    )
+)
+exit /b
