@@ -10,21 +10,18 @@ if "%~1"=="" goto doneParsing
 
 if "%~1"=="-s" (
     set "saveData=true"
-    call :addArg "-s"
     shift
     goto parsePaths
 )
 
 if "%~1"=="-u" (
     set "uninstall=true"
-    call :addArg "-u"
     shift
     goto parsePaths
 )
 
 if "%~1"=="--browser" (
     set "browserPath=%~2"
-    call :addArg "--browser" "%~2"
     shift
     shift
     goto parsePaths
@@ -32,7 +29,6 @@ if "%~1"=="--browser" (
 
 if "%~1"=="--profile" (
     set "chromeFolder=%~2\chrome"
-    call :addArg "--profile" "%~2"
     shift
     shift
     goto parsePaths
@@ -40,14 +36,12 @@ if "%~1"=="--profile" (
 
 if "%~1"=="--no-boot" (
     set "installBoot=false"
-    call :addArg "--no-boot"
     shift
     goto parsePaths
 )
 
 if "%~1"=="--bootloader" (
     set "bootloaderVersion=%~2"
-    call :addArg "--bootloader" "%~2"
     shift
     shift
     goto parsePaths
@@ -55,15 +49,18 @@ if "%~1"=="--bootloader" (
 
 if "%~1"=="--version" (
     set "sineVersion=%~2"
-    call :addArg "--version" "%~2"
     shift
     shift
     goto parsePaths
 )
 
+if not defined extPath (
+    set "extPath=%~1"
+) else (
+    set "extPath=!extPath! %~1"
+)
 shift
 goto parsePaths
-
 :doneParsing
 
 if not defined installBoot set "installBoot=true"
@@ -113,51 +110,26 @@ if errorlevel 1 (
     if "%installBoot%"=="true" (
         echo. > "%browserPath%\.__writetest" 2>nul
         if not exist "%browserPath%\.__writetest" (
-            powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%scriptPath%' -ArgumentList !args! -Verb RunAs -Wait"
-            exit /b
+            powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "Start-Process -FilePath '!scriptPath!' -ArgumentList '%browserPath%' -Verb RunAs -Wait"
+            set "installBoot=false"
         ) else (
             del "%browserPath%\.__writetest" >nul 2>&1
         )
-    ) else (
-        if exist "%chromeFolder%\update" (
-            del "%chromeFolder%\update"
-        )
     )
-)
-
-if "%installBoot%"=="true" (
-    if defined uninstall (
-        del "%browserPath%\config.js"
-        del "%browserPath%\defaults\pref\config-prefs.js"
-    ) else (
-        echo %browserPath%
-        powershell -NoProfile -Command ^
-            "Expand-Archive -Force 'program.zip' '%browserPath%'"
-        del program.zip
-    )
-
-    pause
 
     if exist "%chromeFolder%\update" (
         del "%chromeFolder%\update"
     )
 )
 
-:addArg
-set "arg=%~1"
-set "val=%~2"
-
-if not defined val (
-    if defined args (
-        set "args=!args!,"%arg%""
+if "%installBoot%"=="true" (
+    if defined uninstall (
+        del "%extPath%\config.js"
+        del "%extPath%\defaults\pref\config-prefs.js"
     ) else (
-        set "args="%arg%""
-    )
-) else (
-    if defined args (
-        set "args=!args!,"%arg%","%val%""
-    ) else (
-        set "args="%arg%","%val%""
+        powershell -NoProfile -Command ^
+            "Expand-Archive -Force 'program.zip' '%extPath%'"
+        del program.zip
     )
 )
-exit /b
