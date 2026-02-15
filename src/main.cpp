@@ -714,6 +714,7 @@ int main(int argc, char* argv[])
     int shouldNotify = 0;
     int installStep = 0;
     ProcessHandle processHandle;
+    ImVec2 inputPadding = ImVec2(10.0f, 6.0f);
 
     if (!glfwInit()) return -1;
 
@@ -754,7 +755,7 @@ int main(int argc, char* argv[])
     
     ImGuiStyle& style = ImGui::GetStyle(); 
     style.ScaleAllSizes(uiScale);
-    style.FrameRounding = 5.f;
+    style.FrameRounding = 8.f;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     
@@ -884,7 +885,9 @@ int main(int argc, char* argv[])
                 strncpy(browserPath, autoBrowserPath.c_str(), sizeof(browserPath) - 1);
             }
             ImGui::PushFont(bodyFont);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, inputPadding);
             ImGui::InputText("##browser", browserPath, IM_ARRAYSIZE(browserPath));
+            ImGui::PopStyleVar();
             ImGui::PopFont();
 
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
@@ -929,7 +932,9 @@ int main(int argc, char* argv[])
                 strncpy(profileFolderPath, autoProfilePath.c_str(), sizeof(profileFolderPath) - 1);
             }
             ImGui::PushFont(bodyFont);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, inputPadding);
             ImGui::InputText("##profile", profileFolderPath, IM_ARRAYSIZE(profileFolderPath));
+            ImGui::PopStyleVar();
             ImGui::PopFont();
             browserPathStr = browserPath;
 
@@ -1047,7 +1052,9 @@ int main(int argc, char* argv[])
                                 {
                                     ImGui::Text("Alright, here's a text field, just put whatever you want in it.");
                                     ImGui::PopStyleColor();
+                                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, inputPadding);
                                     ImGui::InputText("##joke", reason, IM_ARRAYSIZE(reason));
+                                    ImGui::PopStyleVar();
                                 }
                             }
                         }
