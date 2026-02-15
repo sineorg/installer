@@ -115,11 +115,8 @@ if errorlevel 1 (
             set "installBoot=false"
         ) else (
             del "%browserPath%\.__writetest" >nul 2>&1
+            set "extPath=%browserPath%"
         )
-    )
-
-    if exist "%chromeFolder%\update" (
-        del "%chromeFolder%\update"
     )
 )
 
@@ -132,4 +129,8 @@ if "%installBoot%"=="true" (
             "Expand-Archive -Force 'program.zip' '%extPath%'"
         del program.zip
     )
+)
+
+if exist "%chromeFolder%\update" (
+    del "%chromeFolder%\update"
 )
