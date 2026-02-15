@@ -751,7 +751,10 @@ int main(int argc, char* argv[])
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
-    ImGui::GetStyle().ScaleAllSizes(uiScale);
+    
+    ImGuiStyle& style = ImGui::GetStyle(); 
+    style.ScaleAllSizes(uiScale);
+    style.FrameRounding = 5.f;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     
