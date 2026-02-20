@@ -94,15 +94,15 @@ if errorlevel 1 (
         curl -L "%sineLink%/engine.zip" -o engine.zip >nul 2>&1
         curl -L "%sineLink%/locales.zip" -o locales.zip >nul 2>&1
 
-        powershell -NoProfile -Command ^
+        "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'profile.zip' '%chromeFolder%'"
         del profile.zip >nul 2>&1
 
-        powershell -NoProfile -Command ^
+        "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'engine.zip' '%chromeFolder%'"
         del engine.zip >nul 2>&1
 
-        powershell -NoProfile -Command ^
+        "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'locales.zip' '%chromeFolder%'"
         del locales.zip >nul 2>&1
     )
@@ -110,7 +110,7 @@ if errorlevel 1 (
     if "%installBoot%"=="true" (
         echo. > "%browserPath%\.__writetest" 2>nul
         if not exist "%browserPath%\.__writetest" (
-            powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+            "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -Command ^
   "Start-Process -FilePath '!scriptPath!' -ArgumentList '%browserPath%' -Verb RunAs -Wait"
             set "installBoot=false"
         ) else (
@@ -134,4 +134,5 @@ if "%installBoot%"=="true" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
+
 
