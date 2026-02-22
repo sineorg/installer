@@ -122,11 +122,11 @@ if errorlevel 1 (
 
 if "%installBoot%"=="true" (
     if defined uninstall (
-        del "%extPath%\config.js"
-        del "%extPath%\defaults\pref\config-prefs.js"
+        del "!extPath!\config.js"
+        del "!extPath!\defaults\pref\config-prefs.js"
     ) else (
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
-            "Expand-Archive -Force 'program.zip' '%extPath%'"
+            "Expand-Archive -Force 'program.zip' '!extPath!'"
         del program.zip
     )
 )
@@ -134,5 +134,6 @@ if "%installBoot%"=="true" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
+
 
 
