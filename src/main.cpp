@@ -709,7 +709,7 @@ int main(int argc, char* argv[])
     std::string browserPathStr;
     std::string profilePath;
     bool reinstallBoot = true;
-    bool shouldSaveData = false;
+    bool shouldSaveData = true;
     bool shouldUninstall = false;
     int shouldNotify = 0;
     int installStep = 0;
