@@ -108,7 +108,8 @@ if [[ "$(id -u)" -ne 0 ]]; then
           cmd+=" $(printf '%q' "$arg")"
         done
 
-        osascript -e "do shell script $(printf '%q' "$cmd") with administrator privileges"
+        escaped_cmd=$(printf '%s' "$cmd" | sed 's/"/\\"/g')
+        osascript -e "do shell script \"$escaped_cmd\" with administrator privileges"
       else
         pkexec "$0" "${ORIGINAL_ARGS[@]}"
       fi
