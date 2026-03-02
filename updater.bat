@@ -68,8 +68,7 @@ if not defined installBoot set "installBoot=true"
 set "bootloaderLink=https://github.com/sineorg/bootloader/releases/download/v%bootloaderVersion%"
 set "sineLink=https://github.com/CosmoCreeper/Sine/releases/download/v%sineVersion%"
 
-net session >nul 2>&1
-if errorlevel 1 (
+if not defined extPath (
     echo Welcome to Sine's official updater!
     echo Updating to v%sineVersion%...
     echo Do not cancel the installer. Doing so will crash your Sine installation.
@@ -134,6 +133,3 @@ if "%installBoot%"=="true" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
-
-
-
