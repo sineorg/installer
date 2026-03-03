@@ -14,7 +14,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
     {"Firefox", {
         {"profile", {
             {"win32", { "Mozilla\\Firefox" }},
-            {"linux", { ".mozilla/firefox", "snap/firefox/common/.mozilla/firefox" }},
+            {"linux", { ".config/mozilla/firefox", ".mozilla/firefox", "snap/firefox/common/.mozilla/firefox" }},
             {"darwin", { "Firefox" }}
         }},
         {"Stable", {
@@ -45,7 +45,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
     {"Floorp", {
         {"profile", {
             {"win32", { "Floorp" }},
-            {"linux", { ".floorp" }},
+            {"linux", { ".config/floorp", ".floorp" }},
             {"darwin", { "Floorp" }}
         }},
         {"Stable", {
@@ -60,7 +60,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
     {"Mullvad", {
         {"profile", {
             {"win32", { "Mullvad\\MullvadBrowser" }},
-            {"linux", { ".mullvad-browser" }},
+            {"linux", { ".config/mullvad-browser", ".mullvad-browser" }},
             {"darwin", { "MullvadBrowser" }}
         }},
         {"Stable", {
@@ -77,7 +77,7 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
     {"Waterfox", {
         {"profile", {
             {"win32", { "Waterfox" }},
-            {"linux", { ".waterfox" }},
+            {"linux", { ".config/waterfox", ".waterfox" }},
             {"darwin", { "Waterfox" }}
         }},
         {"Stable", {
@@ -118,5 +118,5 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
     }}
 };
 
-const std::string bootVersion = "0.1.2";
+const std::string bootVersion = "0.1.3";
 const std::string sineVersion = "2.3";
