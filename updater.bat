@@ -90,8 +90,8 @@ if not defined extPath (
     echo %chromeFolder% | find "librewolf" >nul
     if %errorlevel%==0 (
         set "isLibrewolf=true"
-        mkdir "%configFolder%"
-        del "%configFolder%\librewolf.overrides.cfg" >nul 2>&1
+        mkdir "!configFolder!"
+        del "!configFolder!\librewolf.overrides.cfg" >nul 2>&1
     ) else (
         set "isLibrewolf=false"
     )
@@ -117,10 +117,10 @@ if not defined extPath (
 
         if "!isLibrewolf!"=="true" (
             "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
-                "Expand-Archive -Force 'program.zip' '%configFolder%'"
+                "Expand-Archive -Force 'program.zip' '!configFolder!'"
             del program.zip
-            rmdir /s /q "%configFolder%\defaults"
-            ren "%configFolder%\config.js" "librewolf.overrides.cfg"
+            rmdir /s /q "!configFolder!\defaults"
+            ren "!configFolder!\config.js" "librewolf.overrides.cfg"
         )
     )
 
