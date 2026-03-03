@@ -57,6 +57,18 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
             {"darwin", { "/Applications/Floorp.app/Contents/Resources" }}
         }}
     }},
+    {"Librewolf", {
+        {"profile", {
+            {"win32", { "librewolf" }},
+            {"linux", { ".config/librewolf", ".librewolf" }},
+            {"darwin", { "LibreWolf" }}
+        }},
+        {"Stable", {
+            {"win32", { "C:\\Program Files\\LibreWolf", "C:\\Program Files (x86)\\LibreWolf" }},
+            {"linux", { "/opt/librewolf", "/opt/librewolf-bin" }},
+            {"darwin", { "/Applications/LibreWolf.app/Contents/Resources" }}
+        }}
+    }},
     {"Mullvad", {
         {"profile", {
             {"win32", { "Mullvad\\MullvadBrowser" }},
