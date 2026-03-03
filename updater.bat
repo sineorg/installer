@@ -92,6 +92,8 @@ if not defined extPath (
         set "isLibrewolf=true"
         mkdir "%configFolder%"
         del "%configFolder%/librewolf.overrides.cfg" >nul 2>&1
+    ) else (
+        set "isLibrewolf=false"
     )
 
     if not defined uninstall (
@@ -122,7 +124,7 @@ if not defined extPath (
         )
     )
 
-    if "%installBoot%"=="true" (
+    if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
         echo. > "%browserPath%\.__writetest" 2>nul
         if not exist "%browserPath%\.__writetest" (
             "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -Command ^
@@ -149,4 +151,5 @@ if "%installBoot%"=="true" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
+
 
