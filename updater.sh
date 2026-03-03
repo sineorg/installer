@@ -85,6 +85,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
   # Convert to lowercase then check if Librewolf is mentioned
   if [[ "${chromeFolder,,}" == *"librewolf"* ]]; then
     isLibrewolf="true"
+    mkdir -p "$configFolder"
     rm -f "$configFolder/librewolf.overrides.cfg"
   else
     isLibrewolf="false"
