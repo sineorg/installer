@@ -131,12 +131,10 @@ if [[ "$(id -u)" -ne 0 ]]; then
       else
         pkexec "$0" "${ORIGINAL_ARGS[@]}"
       fi
-      exit
+      installBoot=false
     else
       rm -f "$browserPath/.__writetest"
     fi
-  else
-    rm -f "$chromeFolder/update"
   fi
 fi
 
@@ -151,6 +149,6 @@ if $installBoot && ! $isLibrewolf; then
     unzip -oq program.zip -d "$browserPath"
     rm -f program.zip
   fi
-
-  rm -f "$chromeFolder/update"
 fi
+
+rm -f "$chromeFolder/update"
