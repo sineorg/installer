@@ -86,6 +86,14 @@ if not defined extPath (
         rmdir /s /q "%chromeFolder%\sine-mods"
     )
 
+    set "configFolder=%userprofile%/.librewolf"
+    echo %chromeFolder% | find "Librewolf" >nul
+    if %errorlevel%==0 (
+        set "isLibrewolf=true"
+        mkdir "%configFolder%"
+        del "%configFolder%/librewolf.overrides.cfg" >nul 2>&1
+    )
+
     if not defined uninstall (
         curl -L "%bootloaderLink%/program.zip" -o program.zip >nul 2>&1
         curl -L "%bootloaderLink%/profile.zip" -o profile.zip >nul 2>&1
@@ -104,6 +112,14 @@ if not defined extPath (
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'locales.zip' '%chromeFolder%'"
         del locales.zip >nul 2>&1
+
+        if "!isLibrewolf!"=="true" (
+            "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
+                "Expand-Archive -Force 'program.zip' '%configFolder%'"
+            del program.zip
+            rmdir /s /q "%configFolder%\defaults"
+            ren "%configFolder%\config.js" "librewolf.overrides.cfg"
+        )
     )
 
     if "%installBoot%"=="true" (
@@ -133,3 +149,4 @@ if "%installBoot%"=="true" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
+
