@@ -143,7 +143,7 @@ fi
 # --------------------
 # Bootloader install
 # --------------------
-if $installBoot; then
+if $installBoot && ! $isLibrewolf; then
   if $uninstall; then
     rm -f "$browserPath/config.js"
     rm -f "$browserPath/defaults/pref/config-prefs.js"
