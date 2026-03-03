@@ -81,7 +81,11 @@ if [[ "$(id -u)" -ne 0 ]]; then
   fi
 
   # Librewolf detection and cleanup
-  configFolder="~/.librewolf"
+  if [[ "${chromeFolder,,}" == *".config"* ]]; then
+    configFolder="~/.config/librewolf"
+  else
+    configFolder="~/.librewolf"
+  fi
   # Convert to lowercase then check if Librewolf is mentioned
   if [[ "${chromeFolder,,}" == *"librewolf"* ]]; then
     isLibrewolf="true"
