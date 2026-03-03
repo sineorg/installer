@@ -80,6 +80,16 @@ if [[ "$(id -u)" -ne 0 ]]; then
     rm -rf "$chromeFolder/sine-mods"
   fi
 
+  # Librewolf detection and cleanup
+  configFolder="~/.librewolf"
+  # Convert to lowercase then check if Librewolf is mentioned
+  if [[ "${chromeFolder,,}" == *"librewolf"* ]]; then
+    isLibrewolf="true"
+    rm -f "$configFolder/librewolf.overrides.cfg"
+  else
+    isLibrewolf="false"
+  fi
+
   if ! $uninstall; then
     # Downloads
     download_file "$bootloaderLink/program.zip" "program.zip"
@@ -97,10 +107,17 @@ if [[ "$(id -u)" -ne 0 ]]; then
 
     unzip -oq locales.zip -d "$chromeFolder"
     rm -f locales.zip
+
+    if $isLibrewolf; then
+      unzip -oq program.zip -d "$configFolder"
+      rm -f program.zip
+      rm -rf "$configFolder/defaults"
+      mv "$configFolder/config.js" "$configFolder/librewolf.overrides.cfg"
+    fi
   fi
 
   # Write test (permission check)
-  if $installBoot; then
+  if $installBoot && ! $isLibrewolf; then
     if ! touch "$browserPath/.__writetest" 2>/dev/null; then
       if [[ "$OSTYPE" == "darwin"* ]]; then
         cmd="$0"
