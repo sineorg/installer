@@ -137,7 +137,7 @@ if not defined extPath (
     )
 )
 
-if "%installBoot%"=="true" (
+if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
     if defined uninstall (
         del "!extPath!\config.js"
         del "!extPath!\defaults\pref\config-prefs.js"
@@ -151,6 +151,7 @@ if "%installBoot%"=="true" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
+
 
 
 
