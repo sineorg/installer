@@ -86,12 +86,12 @@ if not defined extPath (
         rmdir /s /q "%chromeFolder%\sine-mods"
     )
 
-    set "configFolder=%userprofile%/.librewolf"
+    set "configFolder=%userprofile%\.librewolf"
     echo %chromeFolder% | find "librewolf" >nul
     if %errorlevel%==0 (
         set "isLibrewolf=true"
         mkdir "%configFolder%"
-        del "%configFolder%/librewolf.overrides.cfg" >nul 2>&1
+        del "%configFolder%\librewolf.overrides.cfg" >nul 2>&1
     ) else (
         set "isLibrewolf=false"
     )
@@ -151,7 +151,3 @@ if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
-
-
-
-
