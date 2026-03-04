@@ -134,8 +134,10 @@ if not defined extPath (
     if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
         echo. > "%browserPath%\.__writetest" 2>nul
         if not exist "%browserPath%\.__writetest" (
+            set "args=%browserPath%"
+            if defined uninstall set "args=-u %args%"
             "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -Command ^
-  "Start-Process -FilePath '!scriptPath!' -ArgumentList '%browserPath%' -Verb RunAs -Wait" 2>>installer.log
+  "Start-Process -FilePath '!scriptPath!' -ArgumentList '!args!' -Verb RunAs -Wait" 2>>installer.log
             set "installBoot=false"
         ) else (
             del "%browserPath%\.__writetest" >nul 2>&1
@@ -160,3 +162,4 @@ if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update" 2>>installer.log
 )
+
