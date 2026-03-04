@@ -87,10 +87,10 @@ if not defined extPath (
     )
 
     set "configFolder=%userprofile%\.librewolf"
-    echo %chromeFolder% | find "librewolf" >nul
-    if %errorlevel%==0 (
+    echo(!chromeFolder! | find /i "librewolf" >nul
+    if !errorlevel! equ 0 (
         set "isLibrewolf=true"
-        mkdir "!configFolder!"
+        mkdir "!configFolder!" 2>nul
         del "!configFolder!\librewolf.overrides.cfg" >nul 2>&1
     ) else (
         set "isLibrewolf=false"
@@ -151,3 +151,4 @@ if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update"
 )
+
