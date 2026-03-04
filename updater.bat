@@ -148,7 +148,6 @@ if not defined extPath (
 
 if not defined isLibrewolf set "isLibrewolf=false"
 
-echo Bootloader stage (unsure of admin status)
 echo Install bootloader? %installBoot%. Is Librewolf? !isLibrewolf!. >> "installer.log"
 
 if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
