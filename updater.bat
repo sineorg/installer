@@ -144,18 +144,19 @@ if not defined extPath (
     )
 )
 
+if "!isLibrewolf!"=="" set "isLibrewolf=false"
+
 if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
     if defined uninstall (
-        del "!extPath!\config.js"
-        del "!extPath!\defaults\pref\config-prefs.js"
+        del "!extPath!\config.js" 2>>installer.log
+        del "!extPath!\defaults\pref\config-prefs.js" 2>>installer.log
     ) else (
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
-            "Expand-Archive -Force 'program.zip' '!extPath!'"
-        del program.zip
+            "Expand-Archive -Force 'program.zip' '!extPath!'" 2>>installer.log
+        del program.zip 2>>installer.log
     )
 )
 
 if exist "%chromeFolder%\update" (
-    del "%chromeFolder%\update"
+    del "%chromeFolder%\update" 2>>installer.log
 )
-
