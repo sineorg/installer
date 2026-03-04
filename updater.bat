@@ -142,11 +142,13 @@ if not defined extPath (
         ) else (
             del "%browserPath%\.__writetest" >nul 2>&1
             set "extPath=%browserPath%"
+            set "isNested=false"
         )
     )
 )
 
 if not defined isLibrewolf set "isLibrewolf=false"
+if not defined isNested set "isNested=true"
 
 echo Install bootloader? %installBoot%. Is Librewolf? !isLibrewolf!. >> "installer.log"
 
@@ -161,8 +163,7 @@ if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'program.zip' '!extPath!'" 2>>installer.log
 
-        net session >nul 2>&1
-        if %errorlevel%==0 (
+        if !isNested!=="true" (
             exit
         )
     )
@@ -173,3 +174,4 @@ del program.zip 2>>installer.log
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update" 2>>installer.log
 )
+
