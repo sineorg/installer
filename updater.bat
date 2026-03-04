@@ -150,16 +150,11 @@ if not defined extPath (
 if not defined isLibrewolf set "isLibrewolf=false"
 if not defined isNested set "isNested=true"
 
-echo Install bootloader? %installBoot%. Is Librewolf? !isLibrewolf!. >> "bootloader.log"
-
 if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
-    echo Triggering bootloader events >> "bootloader.log"
     if defined uninstall (
-        echo Triggering bootloader uninstallation >> "bootloader.log"
         del "!extPath!\config.js" 2>>bootloader.log
         del "!extPath!\defaults\pref\config-prefs.js" 2>>bootloader.log
     ) else (
-        echo Triggering bootloader installation >> "bootloader.log"
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'program.zip' '!extPath!'" 2>>bootloader.log
 
@@ -174,5 +169,6 @@ del program.zip 2>>installer.log
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update" 2>>installer.log
 )
+
 
 
