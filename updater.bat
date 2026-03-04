@@ -137,7 +137,7 @@ if not defined extPath (
             set "args=%browserPath%"
             if defined uninstall set "args=-u %args%"
             "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -Command ^
-  "Start-Process -FilePath '!scriptPath!' -ArgumentList '!args!' -Verb RunAs -Wait" 2>>installer.log
+                "Start-Process -FilePath '!scriptPath!' -ArgumentList '!args!' -Verb RunAs -Wait" 2>>installer.log
             set "installBoot=false"
         ) else (
             del "%browserPath%\.__writetest" >nul 2>&1
@@ -146,20 +146,31 @@ if not defined extPath (
     )
 )
 
-if "!isLibrewolf!"=="" set "isLibrewolf=false"
+if not defined isLibrewolf set "isLibrewolf=false"
+
+echo Bootloader stage (unsure of admin status)
+echo Install bootloader? %installBoot%. Is Librewolf? !isLibrewolf!. >> "installer.log"
 
 if "%installBoot%"=="true" if "!isLibrewolf!"=="false" (
+    echo Triggering bootloader events >> "installer.log"
     if defined uninstall (
+        echo Triggering bootloader uninstallation >> "installer.log"
         del "!extPath!\config.js" 2>>installer.log
         del "!extPath!\defaults\pref\config-prefs.js" 2>>installer.log
     ) else (
+        echo Triggering bootloader installation >> "installer.log"
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'program.zip' '!extPath!'" 2>>installer.log
-        del program.zip 2>>installer.log
+
+        net session >nul 2>&1
+        if %errorlevel%==0 (
+            exit
+        )
     )
 )
+
+del program.zip 2>>installer.log
 
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update" 2>>installer.log
 )
-
