@@ -13,6 +13,7 @@ chromeFolder=""
 installBoot=true
 saveData=false
 uninstall=false
+isLibrewolf=false
 
 ORIGINAL_ARGS=("$@")
 
@@ -76,7 +77,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
     "$chromeFolder/JS" \
     "$chromeFolder/locales" \
     "$chromeFolder/utils"
-  if ! $saveData; then
+  if [[ "$saveData" != true ]]; then
     rm -rf "$chromeFolder/sine-mods"
   fi
 
@@ -95,7 +96,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
     isLibrewolf="false"
   fi
 
-  if ! $uninstall; then
+  if [[ "$uninstall" != true ]]; then
     # Downloads
     download_file "$bootloaderLink/program.zip" "program.zip"
     download_file "$bootloaderLink/profile.zip" "profile.zip"
@@ -113,7 +114,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
     unzip -oq locales.zip -d "$chromeFolder"
     rm -f locales.zip
 
-    if $isLibrewolf; then
+    if [[ "$isLibrewolf" = true ]]; then
       unzip -oq program.zip -d "$configFolder"
       rm -f program.zip
       rm -rf "$configFolder/defaults"
@@ -122,9 +123,9 @@ if [[ "$(id -u)" -ne 0 ]]; then
   fi
 
   # Write test (permission check)
-  if $installBoot && ! $isLibrewolf; then
+  if [[ "$installBoot" = true && "$isLibrewolf" != true ]]; then
     if ! touch "$browserPath/.__writetest" 2>/dev/null; then
-      if [[ "$OSTYPE" == "darwin"* ]]; then
+      if [[ "$OSTYPE" = "darwin"* ]]; then
         cmd="$0"
         for arg in "${ORIGINAL_ARGS[@]}"; do
           cmd+=" $(printf '%q' "$arg")"
@@ -145,8 +146,8 @@ fi
 # --------------------
 # Bootloader install
 # --------------------
-if $installBoot && ! $isLibrewolf; then
-  if $uninstall; then
+if [ "$installBoot" = true && "$isLibrewolf" != true ]; then
+  if [[ "$uninstall" = true ]]; then
     rm -f "$browserPath/config.js"
     rm -f "$browserPath/defaults/pref/config-prefs.js"
   else
