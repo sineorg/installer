@@ -76,7 +76,6 @@ if not defined extPath (
     echo Update triggered with: v%sineVersion% >> "installer.log"
     echo Using bootloader version %bootloaderVersion% >> "installer.log"
     echo Using browser path: %browserPath% >> "installer.log"
-    echo Using chrome folder: %chromeFolder% >> "installer.log"
 
     if exist "%chromeFolder%\JS" (
         rmdir /s /q "%chromeFolder%\JS" 2>>installer.log
@@ -169,6 +168,3 @@ del program.zip 2>>installer.log
 if exist "%chromeFolder%\update" (
     del "%chromeFolder%\update" 2>>installer.log
 )
-
-
-
