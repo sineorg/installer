@@ -82,13 +82,13 @@ if [[ "$(id -u)" -ne 0 ]]; then
   fi
 
   # Librewolf detection and cleanup
-  if [[ "${chromeFolder,,}" == *".config"* ]]; then
+  if [[ "$chromeFolder" == *".config"* ]]; then
     configFolder="~/.config/librewolf"
   else
     configFolder="~/.librewolf"
   fi
   # Convert to lowercase then check if Librewolf is mentioned
-  if [[ "${chromeFolder,,}" == *"librewolf"* ]]; then
+  if [[ "$chromeFolder" == *"librewolf"* ]]; then
     isLibrewolf="true"
     mkdir -p "$configFolder"
     rm -f "$configFolder/librewolf.overrides.cfg"
