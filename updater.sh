@@ -75,7 +75,6 @@ if [[ "$(id -u)" -ne 0 ]]; then
   # Cleanup
   rm -rf \
     "$chromeFolder/JS" \
-    "$chromeFolder/locales" \
     "$chromeFolder/utils"
   if [[ "$saveData" != true ]]; then
     rm -rf "$chromeFolder/sine-mods"
@@ -102,7 +101,6 @@ if [[ "$(id -u)" -ne 0 ]]; then
     download_file "$bootloaderLink/profile.zip" "profile.zip"
 
     download_file "$sineLink/engine.zip" "engine.zip"
-    download_file "$sineLink/locales.zip" "locales.zip"
 
     # Extract
     unzip -oq profile.zip -d "$chromeFolder"
@@ -110,9 +108,6 @@ if [[ "$(id -u)" -ne 0 ]]; then
 
     unzip -oq engine.zip -d "$chromeFolder"
     rm -f engine.zip
-
-    unzip -oq locales.zip -d "$chromeFolder"
-    rm -f locales.zip
 
     if [[ "$isLibrewolf" = true ]]; then
       unzip -oq program.zip -d "$configFolder"

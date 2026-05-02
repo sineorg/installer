@@ -614,7 +614,6 @@ void installSine(
         steps.insert(steps.end(), {
             "Downloading profile.zip...",
             "Downloading engine.zip...",
-            "Downloading locales.zip...",
             "Configuring your profile..."
         });
     }

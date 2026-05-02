@@ -80,9 +80,6 @@ if not defined extPath (
     if exist "%chromeFolder%\JS" (
         rmdir /s /q "%chromeFolder%\JS" 2>>installer.log
     )
-    if exist "%chromeFolder%\locales" (
-        rmdir /s /q "%chromeFolder%\locales" 2>>installer.log
-    )
     if exist "%chromeFolder%\utils" (
         rmdir /s /q "%chromeFolder%\utils" 2>>installer.log
     )
@@ -107,7 +104,6 @@ if not defined extPath (
         curl -L "%bootloaderLink%/profile.zip" -o profile.zip 2>>installer.log
 
         curl -L "%sineLink%/engine.zip" -o engine.zip 2>>installer.log
-        curl -L "%sineLink%/locales.zip" -o locales.zip 2>>installer.log
 
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'profile.zip' '%chromeFolder%'" 2>>installer.log
@@ -116,10 +112,6 @@ if not defined extPath (
         "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
             "Expand-Archive -Force 'engine.zip' '%chromeFolder%'" 2>>installer.log
         del engine.zip 2>>installer.log
-
-        "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
-            "Expand-Archive -Force 'locales.zip' '%chromeFolder%'" 2>>installer.log
-        del locales.zip 2>>installer.log
 
         if "!isLibrewolf!"=="true" (
             "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command ^
