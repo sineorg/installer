@@ -355,14 +355,19 @@ void renderFooter(ImFont* &font, float uiScale, ImVec2 windowSize, bool hideEnd 
     ImGui::PopFont();
 }
 
-std::string getDownloadsFolder()
+std::string getTempFolder()
 {
 #ifdef _WIN32
-    const char* userProfile = std::getenv("USERPROFILE");
-    return std::string(userProfile) + "\\Downloads\\";
+    char buf[MAX_PATH + 1] = {};
+    if (GetTempPathA(sizeof(buf), buf) != 0)
+        return std::string(buf);
+#elif __linux__
+    if (const char* xdg = std::getenv("XDG_RUNTIME_DIR"))
+        return std::string(xdg) + "/";
+    return "/tmp/";
 #else
-    const char* home = std::getenv("HOME");
-    return std::string(home) + "/Downloads/";
+    if (const char* t = std::getenv("TMPDIR")) return std::string(t);
+    return "/tmp/";
 #endif
 }
 
@@ -589,7 +594,7 @@ void installSine(
     }
 
     const std::string updaterName = std::string("updater.") + (getOS() == "win32" ? "bat" : "sh");
-    const std::string filePath = getDownloadsFolder() + updaterName;
+    const std::string filePath = getTempFolder() + updaterName;
 
     std::vector<const char*> steps;
     steps.push_back("Launching manager...");
