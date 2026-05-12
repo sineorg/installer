@@ -684,7 +684,7 @@ void installSine(
         }
         else if (steps[installStep - 1] == "Launching manager...")
         {
-            downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
+            downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + SINE_VERSION + "/" + updaterName, filePath);
             processHandle = launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
         }
         else if (isFinalStep)
