@@ -487,7 +487,9 @@ std::wstring s2ws(const std::string& str) {
 }
 #endif
 
-
+// The compiler defines the following as build-time variables:
+// SINE_VERSION
+// BOOT_VERSION
 ProcessHandle launchProcess(
     const std::string& targetPath,
     const std::string& browserPath,
@@ -506,8 +508,8 @@ ProcessHandle launchProcess(
     args += "--browser \"" + browserPath + "\" ";
     args += "--profile \"" + profilePath + "\" ";
     if (!reinstallBoot) args += "--no-boot ";
-    args += "--bootloader \"" + bootVersion + "\" ";
-    args += "--version \"" + sineVersion + "\"";
+    args += "--bootloader \"" + BOOT_VERSION + "\" ";
+    args += "--version \"" + SINE_VERSION + "\"";
     
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
@@ -563,10 +565,10 @@ ProcessHandle launchProcess(
             args.push_back("--no-boot");
 
         args.push_back("--bootloader");
-        args.push_back(bootVersion);
+        args.push_back(BOOT_VERSION);
 
         args.push_back("--version");
-        args.push_back(sineVersion);
+        args.push_back(SINE_VERSION);
 
         std::vector<char*> argv;
         for (auto& s : args)
