@@ -129,6 +129,3 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
         }}
     }}
 };
-
-const std::string bootVersion = "0.1.4";
-const std::string sineVersion = "2.3.1";
