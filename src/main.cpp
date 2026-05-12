@@ -64,6 +64,8 @@ int WINAPI WinMain(
 #include <mach-o/dyld.h>
 #endif
 
+const std::string sineVersion = std::string(SINE_VERSION);
+
 using namespace std::chrono;
 
 enum class State
@@ -508,8 +510,8 @@ ProcessHandle launchProcess(
     args += "--browser \"" + browserPath + "\" ";
     args += "--profile \"" + profilePath + "\" ";
     if (!reinstallBoot) args += "--no-boot ";
-    args += "--bootloader \"" + BOOT_VERSION + "\" ";
-    args += "--version \"" + SINE_VERSION + "\"";
+    args += "--bootloader \"" + std::string(BOOT_VERSION) + "\" ";
+    args += "--version \"" + sineVersion + "\"";
     
     STARTUPINFOA si = {};
     PROCESS_INFORMATION pi = {};
@@ -684,7 +686,7 @@ void installSine(
         }
         else if (steps[installStep - 1] == "Launching manager...")
         {
-            downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + SINE_VERSION + "/" + updaterName, filePath);
+            downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
             processHandle = launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
         }
         else if (isFinalStep)
