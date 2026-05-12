@@ -19,7 +19,3 @@ extern const std::vector<
         >
     >
 > browsers;
-
-extern const std::string bootVersion;
-extern const std::string sineVersion;
-extern const bool isCosine;
