@@ -428,19 +428,28 @@ bool isProcessRunning(const std::string& processName) {
     return false;
 
 #elif __linux__
-    // Linux implementation
-    for (const auto& entry : std::filesystem::directory_iterator("/proc")) {
-        if (entry.is_directory()) {
-            std::string cmdlinePath = entry.path().string() + "/cmdline";
-            std::ifstream cmdline(cmdlinePath);
-            std::string content;
-            std::getline(cmdline, content, '\0');
-            if (content.find(processName) != std::string::npos) {
-                return true;
-            }
-        }
+for (const auto& entry : std::filesystem::directory_iterator("/proc")) {
+    if (!entry.is_directory())
+        continue;
+
+    std::string cmdlinePath = entry.path().string() + "/cmdline";
+    std::ifstream cmdline(cmdlinePath);
+
+    std::string executable;
+    std::getline(cmdline, executable, '\0');
+
+    if (executable.empty())
+        continue;
+
+    // Extract filename from full path
+    std::string filename =
+        std::filesystem::path(executable).filename().string();
+
+    if (filename == processName) {
+        return true;
     }
-    return false;
+}
+return false;
 
 #elif __APPLE__
     // macOS implementation
