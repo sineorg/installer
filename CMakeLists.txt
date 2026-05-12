@@ -14,6 +14,9 @@ project(sine_installer LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(SINE_VERSION "0.0.0" CACHE STRING "Current Sine version string")
+set(BOOT_VERSION "0.0.0" CACHE STRING "Current Sine bootloader version string")
+
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 if(WIN32)
@@ -30,6 +33,11 @@ add_executable(sine_installer
     external/imgui/imgui_widgets.cpp
     external/imgui/backends/imgui_impl_glfw.cpp
     external/imgui/backends/imgui_impl_opengl3.cpp
+)
+
+target_compile_definitions(sine_installer PRIVATE
+    SINE_VERSION="${SINE_VERSION}"
+    BOOT_VERSION="${BOOT_VERSION}"
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
