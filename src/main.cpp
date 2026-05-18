@@ -647,66 +647,50 @@ void installSine(
     steps.push_back("Finished.");
 
     bool isFinalStep = installStep == steps.size() - 1;
-    
-    bool browserOpen = false;
-    if (!isFinalStep)
-    {
-        browserOpen = isProcessRunning(toLowercase(browsers[selectedBrowser].first) + (getOS() == "win32" ? ".exe" : ""));
-    }
 
-    if (browserOpen)
+    renderStepHeader(steps[installStep], mediumFont, timeDiff);
+    const float totalWidth = ImGui::GetContentRegionAvail().x;
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::ProgressBar((installStep + 1) / (float)steps.size(), ImVec2(totalWidth * 0.6f, 30));
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+
+    if (steps[installStep] == "Clearing startup cache...")
     {
-        renderStepHeader("Please close your browser before installing.", mediumFont, timeDiff);
+        if (getOS() == "win32")
+        {
+            size_t pos = profilePath.find("Roaming");
+            removeDir(profilePath.replace(pos, 7, "Local") + "/startupCache");
+        }
+        else if (getOS() == "darwin")
+        {
+            size_t pos = profilePath.find("Application Support");
+            removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
+        }
+    }
+    else if (steps[installStep - 1] == "Launching manager...")
+    {
+        downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
+        processHandle = launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
+    }
+    else if (isFinalStep)
+    {
+        ImGui::Dummy(ImVec2(0.0f, 20.0f));
         ImGui::PushFont(lightFont);
-        ImGui::Text("Listening for browser to be closed...");
+        ImGui::Text("If Sine does not appear in the settings page, you may need to clear startup cache");
+        ImGui::Text("(visit about:support and click 'Clear Startup Cache', you must do this on Linux).");
         ImGui::PopFont();
     }
-    else
+
+    if (!isFinalStep)
     {
-        renderStepHeader(steps[installStep], mediumFont, timeDiff);
-        const float totalWidth = ImGui::GetContentRegionAvail().x;
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-        ImGui::ProgressBar((installStep + 1) / (float)steps.size(), ImVec2(totalWidth * 0.6f, 30));
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-
-        if (steps[installStep] == "Clearing startup cache...")
+        std::this_thread::sleep_for(400ms);
+        installStep += 1;
+        if (installStep == steps.size() - 1)
         {
-            if (getOS() == "win32")
-            {
-                size_t pos = profilePath.find("Roaming");
-                removeDir(profilePath.replace(pos, 7, "Local") + "/startupCache");
-            }
-            else if (getOS() == "darwin")
-            {
-                size_t pos = profilePath.find("Application Support");
-                removeDir(profilePath.replace(pos, 19, "Caches") + "/startupCache");
-            }
-        }
-        else if (steps[installStep - 1] == "Launching manager...")
-        {
-            downloadFile("https://github.com/CosmoCreeper/Sine/releases/download/v" + sineVersion + "/" + updaterName, filePath);
-            processHandle = launchProcess(filePath, browserPathStr, profilePath, shouldSaveData, shouldUninstall, reinstallBoot);
-        }
-        else if (isFinalStep)
-        {
-            ImGui::Dummy(ImVec2(0.0f, 20.0f));
-            ImGui::PushFont(lightFont);
-            ImGui::Text("If Sine does not appear in the settings page, you may need to clear startup cache");
-            ImGui::Text("(visit about:support and click 'Clear Startup Cache', you must do this on Linux).");
-            ImGui::PopFont();
-        }
-
-        if (!isFinalStep)
-        {
-            std::this_thread::sleep_for(400ms);
-            installStep += 1;
-            if (installStep == steps.size() - 1)
-            {
-                processHandle.wait();
-                std::remove(filePath.c_str());
-            }
+            processHandle.wait();
+            std::remove(filePath.c_str());
         }
     }
 
