@@ -7,7 +7,11 @@ const std::string homePath = []() {
     return std::string(envHome);
 }();
 #else
-const std::string homePath = "";
+const std::string homePath = []() {
+    const char* envHome = std::getenv("HOME");
+    if (!envHome) return std::string("");
+    return std::string(envHome);
+}();
 #endif
 
 const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::map<std::string, std::vector<std::string>>>>>> browsers = {
@@ -111,8 +115,10 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
             }},
             {"linux", { "/opt/zen-browser-bin", "/opt/zen-browser", "/opt/zen" }},
             {"darwin", {
-                "/Applications/Zen Browser.app/contents/resources",
-                "/Applications/Zen.app/Contents/Resources"
+                "/Applications/Zen Browser.app/Contents/Resources",
+                "/Applications/Zen.app/Contents/Resources",
+                homePath + "/Applications/Zen Browser.app/Contents/Resources",
+                homePath + "/Applications/Zen.app/Contents/Resources"
             }}
         }},
         {"Twilight", {
@@ -122,9 +128,12 @@ const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std:
             }},
             {"linux", { "/opt/zen-twilight", "/opt/zen-browser-twilight" }},
             {"darwin", {
-                "/Applications/Zen Browser.app/Twilight/contents/resources",
+                "/Applications/Zen Browser.app/Twilight/Contents/Resources",
                 "/Applications/Zen.app/Twilight/Contents/Resources",
-                "/Applications/Twilight.app/Contents/Resources"
+                "/Applications/Twilight.app/Contents/Resources",
+                homePath + "/Applications/Zen Browser.app/Twilight/Contents/Resources",
+                homePath + "/Applications/Zen.app/Twilight/Contents/Resources",
+                homePath + "/Applications/Twilight.app/Contents/Resources"
             }}
         }}
     }}

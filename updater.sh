@@ -146,6 +146,12 @@ if [[ "$installBoot" = true && "$isLibrewolf" != true ]]; then
     rm -f "$browserPath/config.js"
     rm -f "$browserPath/defaults/pref/config-prefs.js"
   else
+    # Download program.zip if not already present. When the script is
+    # re-launched with elevated privileges (uid==0), the download block
+    # above is skipped, so the file won't exist yet.
+    if [[ ! -f "program.zip" ]]; then
+      download_file "$bootloaderLink/program.zip" "program.zip"
+    fi
     unzip -oq program.zip -d "$browserPath"
     rm -f program.zip
   fi
