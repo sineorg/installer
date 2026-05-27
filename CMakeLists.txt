@@ -14,7 +14,7 @@ project(sine_installer LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(SINE_VERSION "0.0.0" CACHE STRING "Current Sine version string")
+set(SINE_VERSION "0.0.0.0" CACHE STRING "Current Sine version string")
 set(BOOT_VERSION "0.0.0" CACHE STRING "Current Sine bootloader version string")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
