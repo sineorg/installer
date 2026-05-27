@@ -40,6 +40,20 @@ target_compile_definitions(sine_installer PRIVATE
     BOOT_VERSION="${BOOT_VERSION}"
 )
 
+if(WIN32)
+    string(REPLACE "." ";" _ver_list "${SINE_VERSION}")
+    list(GET _ver_list 0 SINE_VERSION_MAJOR)
+    list(GET _ver_list 1 SINE_VERSION_MINOR)
+    list(GET _ver_list 2 SINE_VERSION_PATCH)
+
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/installer.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/resource.rc
+        @ONLY
+    )
+    target_sources(sine_installer PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/resource.rc)
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(sine_installer PRIVATE -static-libgcc -static-libstdc++)
 endif()
