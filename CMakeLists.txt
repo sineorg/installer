@@ -68,8 +68,9 @@ endif()
 
 if(WIN32)
     set_target_properties(sine_installer PROPERTIES
+        OUTPUT_NAME "${SINE_OUTPUT_NAME}"
         WIN32_EXECUTABLE TRUE
-        LINK_FLAGS "/ENTRY:mainCRTStartup"
+        LINK_FLAGS "/ENTRY:mainCRTStartup /MANIFEST:NO"
     )
 endif()
 
