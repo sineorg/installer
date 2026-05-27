@@ -41,6 +41,14 @@ target_compile_definitions(sine_installer PRIVATE
 )
 
 if(WIN32)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")
+        set(SINE_OUTPUT_NAME "sine-win-arm64")
+    else()
+        set(SINE_OUTPUT_NAME "sine-win-x64")
+    endif()
+
+    set_target_properties(sine_installer PROPERTIES OUTPUT_NAME "${SINE_OUTPUT_NAME}")
+
     string(REPLACE "." ";" _ver_list "${SINE_VERSION}")
     list(GET _ver_list 0 SINE_VERSION_MAJOR)
     list(GET _ver_list 1 SINE_VERSION_MINOR)
