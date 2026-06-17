@@ -6,13 +6,13 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 project(sine_installer LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 set(SINE_VERSION "0.0.0.0" CACHE STRING "Current Sine version string")
 set(BOOT_VERSION "0.0.0" CACHE STRING "Current Sine bootloader version string")
